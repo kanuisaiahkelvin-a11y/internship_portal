@@ -8,7 +8,7 @@
  *   - Static assets: cache first, then network.
  *   - Everything else (POST, admin, media): untouched.
  */
-const CACHE_VERSION = 'internlink-v1';
+const CACHE_VERSION = 'internlink-v2';
 const OFFLINE_URL = '/offline/';
 const PRECACHE_URLS = [
     OFFLINE_URL,
@@ -57,7 +57,9 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
         event.respondWith((async () => {
             try {
-                return await fetch(request);
+                // no-store: never serve a cached login page. A stale page carries
+                // an old CSRF token and the form then fails with 403.
+                return await fetch(request, { cache: 'no-store' });
             } catch (error) {
                 const cache = await caches.open(CACHE_VERSION);
                 const offline = await cache.match(OFFLINE_URL);

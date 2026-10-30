@@ -128,6 +128,13 @@ class CsrfProtectionTests(TestCase):
                 continue
             self.assertIn(f'https://{host}', settings.CSRF_TRUSTED_ORIGINS)
 
+    def test_login_and_register_pages_are_never_cached(self):
+        for name in ('accounts:login', 'accounts:register'):
+            response = self.client.get(reverse(name))
+            cache_control = response['Cache-Control']
+            self.assertIn('no-store', cache_control, name)
+            self.assertIn('no-cache', cache_control, name)
+
     def test_diagnostics_page_renders(self):
         response = self.client.get(reverse('diagnostics'))
         self.assertEqual(response.status_code, 200)

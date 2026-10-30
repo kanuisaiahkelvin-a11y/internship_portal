@@ -434,8 +434,20 @@ Common causes and fixes:
 Any host listed in `ALLOWED_HOSTS` is automatically trusted as an HTTPS origin,
 so custom domains work without extra configuration.
 
-The failure page shows the technical reason under **Technical details**. Share
-that line if the cause is not obvious.
+### "403" only inside the installed home-screen app
+
+Run the built-in check from inside the app: open `/support/diagnostics/` (or tap
+**Run the connection check** on the error page). It reports the host, the
+cookies the app sent, the `Origin`/`Referer` headers, and offers a test form.
+
+- **Test form accepted** → the app can submit forms; retry the login.
+- **CSRF cookie received: No** or the test form also 403s → the app has no cookie
+  storage. This happens when the icon was added from a chat app's in-app
+  browser (WhatsApp, Messenger, Instagram, Facebook, Gmail). Fix: delete the
+  home-screen icon, open the site in **Chrome** or **Safari**, log in there, then
+  add it to the home screen again.
+
+The failure page shows the technical reason under **Technical details**.
 
 ## Production notes
 

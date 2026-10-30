@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView
 
 from .forms import (
@@ -31,6 +33,9 @@ class RegisterView(CreateView):
         )
         return response
 
+    # A cached sign-up page would carry an old CSRF token, which fails with
+    # "CSRF token incorrect" — common inside installed apps.
+    @method_decorator(never_cache)
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect('dashboard:home')
