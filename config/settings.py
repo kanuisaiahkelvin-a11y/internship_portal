@@ -33,6 +33,15 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
+# Vercel provides these automatically for deployments.
+for vercel_host in (
+    os.getenv('VERCEL_URL'),
+    os.getenv('VERCEL_PROJECT_PRODUCTION_URL'),
+):
+    if vercel_host:
+        ALLOWED_HOSTS.append(vercel_host)
+        CSRF_TRUSTED_ORIGINS.append(f'https://{vercel_host}')
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -130,6 +139,26 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
+
+# Optional S3-compatible storage for uploaded resumes (AWS S3, Cloudflare R2,
+# Supabase Storage, Backblaze B2, etc.). Set AWS_STORAGE_BUCKET_NAME to enable.
+if os.getenv('AWS_STORAGE_BUCKET_NAME'):
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'bucket_name': os.getenv('AWS_STORAGE_BUCKET_NAME'),
+            'access_key': os.getenv('AWS_ACCESS_KEY_ID'),
+            'secret_key': os.getenv('AWS_SECRET_ACCESS_KEY'),
+            'endpoint_url': os.getenv('AWS_S3_ENDPOINT_URL') or None,
+            'region_name': os.getenv('AWS_S3_REGION_NAME') or None,
+            'custom_domain': os.getenv('AWS_S3_CUSTOM_DOMAIN') or None,
+            'addressing_style': os.getenv('AWS_S3_ADDRESSING_STYLE', 'virtual'),
+            'querystring_auth': os.getenv(
+                'AWS_QUERYSTRING_AUTH', 'True'
+            ).lower() in ('true', '1', 'yes'),
+            'file_overwrite': False,
+        },
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

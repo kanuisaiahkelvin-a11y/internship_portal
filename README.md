@@ -183,6 +183,8 @@ internship_portal/
 ├── build.sh            # Render build script
 ├── Procfile            # Gunicorn start command
 ├── render.yaml         # Render Blueprint (web service + Postgres)
+├── vercel.json         # Vercel build/function configuration
+├── .vercelignore       # Files excluded from Vercel uploads
 ├── .python-version     # Python version for hosting
 ├── .env.example
 └── README.md
@@ -281,6 +283,96 @@ If you prefer not to use the Blueprint:
 | `PYTHON_VERSION` | `3.12.6` |
 | `DJANGO_SUPERUSER_EMAIL` | `admin@internlink.test` |
 | `DJANGO_SUPERUSER_PASSWORD` | A strong password |
+
+## Deploy to Vercel
+
+Vercel now supports Django with zero configuration. The repository includes `vercel.json`, and Vercel detects `manage.py` and `config/wsgi.py` automatically.
+
+Vercel Functions have a read-only, ephemeral filesystem, so this app **cannot use SQLite or local media storage in production**. Before deploying, create:
+
+1. **PostgreSQL database** — Neon, Supabase, or Vercel's Postgres integration.
+2. **S3-compatible object storage** — Cloudflare R2, Supabase Storage, Backblaze B2, or AWS S3, for uploaded resumes.
+
+The project includes optional S3 storage support through `django-storages`. It activates automatically when `AWS_STORAGE_BUCKET_NAME` is set.
+
+### 1. Install and log in to the Vercel CLI
+
+```bash
+npm install -g vercel
+vercel login
+```
+
+Or use `npx vercel` instead of a global install.
+
+### 2. Link the project
+
+```bash
+cd "C:\Users\Lenovo\Documents\Default Project\internship_portal"
+vercel link
+```
+
+Choose **Create a new project** and accept the detected settings.
+
+### 3. Add environment variables
+
+Add these in **Vercel → Project → Settings → Environment Variables**, or with `vercel env add`:
+
+| Variable | Required | Example |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | Yes | A long random string |
+| `DEBUG` | Yes | `False` |
+| `DATABASE_URL` | Yes | `postgresql://user:pass@host/db?sslmode=require` |
+| `DJANGO_SUPERUSER_EMAIL` | Yes | `admin@internlink.test` |
+| `DJANGO_SUPERUSER_PASSWORD` | Yes | A strong password |
+| `DJANGO_SUPERUSER_FIRST_NAME` | No | `Portal` |
+| `DJANGO_SUPERUSER_LAST_NAME` | No | `Admin` |
+| `AWS_STORAGE_BUCKET_NAME` | Yes | `internlink-media` |
+| `AWS_ACCESS_KEY_ID` | Yes | Storage access key |
+| `AWS_SECRET_ACCESS_KEY` | Yes | Storage secret key |
+| `AWS_S3_ENDPOINT_URL` | For R2/Supabase | `https://ACCOUNT_ID.r2.cloudflarestorage.com` |
+| `AWS_S3_REGION_NAME` | For R2/Supabase | `auto` or your region |
+| `AWS_QUERYSTRING_AUTH` | No | `True` for private resumes |
+| `AWS_S3_ADDRESSING_STYLE` | No | `virtual` or `path` |
+
+Vercel automatically provides `VERCEL_URL` and `VERCEL_PROJECT_PRODUCTION_URL`; the app adds them to `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`.
+
+### 4. Deploy
+
+```bash
+vercel --prod
+```
+
+The `vercel.json` build command runs:
+
+```bash
+python manage.py collectstatic --noinput
+python manage.py migrate
+python manage.py bootstrap
+```
+
+This creates the admin account from the environment variables. Demo data is **not** loaded automatically on Vercel. To load it once, set `DATABASE_URL` locally and run:
+
+```bash
+python manage.py migrate
+python manage.py bootstrap --seed
+```
+
+### 5. Log in
+
+Open the deployment URL, then visit:
+
+```
+https://YOUR-PROJECT.vercel.app/admin/
+```
+
+Use `DJANGO_SUPERUSER_EMAIL` and `DJANGO_SUPERUSER_PASSWORD`.
+
+### Vercel caveats
+
+- The build command runs migrations against the database on every deployment. Use a separate database for preview deployments if you need isolation.
+- Vercel Functions have execution-time and bundle-size limits. The included `maxDuration` is 60 seconds.
+- Uploaded resumes must go to S3-compatible storage. Without it, file uploads will fail.
+- Vercel is a better fit for the HTTP app than for long-running background jobs or scheduled work.
 
 ### Other hosting options
 
