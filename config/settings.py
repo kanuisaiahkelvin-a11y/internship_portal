@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -93,14 +94,32 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
+if not DATABASE_URL and not DEBUG and (
+    os.getenv('VERCEL') or os.getenv('RENDER')
+):
+    raise ImproperlyConfigured(
+        'DATABASE_URL is required in production. '
+        'Vercel and Render use an ephemeral, read-only filesystem, so SQLite '
+        'cannot store users, applications, or sessions. Configure a PostgreSQL '
+        'database and set DATABASE_URL in the hosting environment.'
+    )
+
+IS_VERCEL = bool(os.getenv('VERCEL'))
+
 if DATABASE_URL:
+    # Serverless functions are frozen between requests, so persistent
+    # connections are not reusable. Long-lived hosts (Render) can pool.
+    conn_max_age = int(os.getenv('DB_CONN_MAX_AGE', '0' if IS_VERCEL else '600'))
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
+            conn_max_age=conn_max_age,
+            conn_health_checks=conn_max_age > 0,
         )
     }
+    # Required when connecting through a PgBouncer-style pooler
+    # (Neon, Supabase) in transaction mode.
+    DISABLE_SERVER_SIDE_CURSORS = IS_VERCEL
 else:
     DATABASES = {
         'default': {
