@@ -34,15 +34,6 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
-# Vercel provides these automatically for deployments.
-for vercel_host in (
-    os.getenv('VERCEL_URL'),
-    os.getenv('VERCEL_PROJECT_PRODUCTION_URL'),
-):
-    if vercel_host:
-        ALLOWED_HOSTS.append(vercel_host)
-        CSRF_TRUSTED_ORIGINS.append(f'https://{vercel_host}')
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -94,22 +85,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-if not DATABASE_URL and not DEBUG and (
-    os.getenv('VERCEL') or os.getenv('RENDER')
-):
+if not DATABASE_URL and not DEBUG and os.getenv('RENDER'):
     raise ImproperlyConfigured(
         'DATABASE_URL is required in production. '
-        'Vercel and Render use an ephemeral, read-only filesystem, so SQLite '
-        'cannot store users, applications, or sessions. Configure a PostgreSQL '
-        'database and set DATABASE_URL in the hosting environment.'
+        'Render web services have an ephemeral filesystem, so SQLite cannot '
+        'store users, applications, or sessions. Attach a Render PostgreSQL '
+        'database and set DATABASE_URL in the service environment.'
     )
 
-IS_VERCEL = bool(os.getenv('VERCEL'))
-
 if DATABASE_URL:
-    # Serverless functions are frozen between requests, so persistent
-    # connections are not reusable. Long-lived hosts (Render) can pool.
-    conn_max_age = int(os.getenv('DB_CONN_MAX_AGE', '0' if IS_VERCEL else '600'))
+    conn_max_age = int(os.getenv('DB_CONN_MAX_AGE', '600'))
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -117,9 +102,11 @@ if DATABASE_URL:
             conn_health_checks=conn_max_age > 0,
         )
     }
-    # Required when connecting through a PgBouncer-style pooler
-    # (Neon, Supabase) in transaction mode.
-    DISABLE_SERVER_SIDE_CURSORS = IS_VERCEL
+    # Set to True only when the connection goes through a PgBouncer-style
+    # pooler in transaction mode (not needed for Render's own database).
+    DISABLE_SERVER_SIDE_CURSORS = os.getenv(
+        'DISABLE_SERVER_SIDE_CURSORS', 'False'
+    ).lower() in ('true', '1', 'yes')
 else:
     DATABASES = {
         'default': {
