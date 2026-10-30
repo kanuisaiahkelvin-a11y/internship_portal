@@ -73,7 +73,11 @@
 
                 <details class="mt-4 small text-muted">
                     <summary>Technical details</summary>
-                    <p class="mt-2 mb-0"><code>{{ reason|default:"No reason reported" }}</code></p>
+                    <p class="mt-2 mb-1"><code>{{ reason|default:"No reason reported" }}</code></p>
+                    <p class="mb-0">
+                        <a href="{% url 'diagnostics' %}">Run the connection check</a>
+                        to see what this browser is sending.
+                    </p>
                 </details>
             </div>
         </div>

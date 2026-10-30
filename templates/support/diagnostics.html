@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Connection check — InternLink{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Connection check</h1>
+        <p class="text-muted">
+            This page shows what this browser or app is sending to the server.
+            Use it to diagnose a login or sign-up that fails with a 403.
+        </p>
+
+        {% if post_result == 'accepted' %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i>
+            The test form was accepted. This browser can submit forms correctly.
+        </div>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        <tr>
+                            <th class="w-50">Address (host)</th>
+                            <td><code>{{ host }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Secure connection</th>
+                            <td>
+                                {% if is_secure %}
+                                <span class="badge bg-success">Yes — {{ scheme }}</span>
+                                {% else %}
+                                <span class="badge bg-danger">No — {{ scheme }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>CSRF cookie received</th>
+                            <td>
+                                {% if csrf_cookie_present %}
+                                <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">No</span>
+                                <div class="small text-muted mt-1">
+                                    Expected on the very first visit — this page
+                                    sets the cookie. Use the test form below to
+                                    confirm it is stored.
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Session cookie received</th>
+                            <td>
+                                {% if session_cookie_present %}
+                                <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Cookies sent</th>
+                            <td><code>{{ cookie_names }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Secure cookies required</th>
+                            <td><code>{{ secure_cookies_required }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Origin header</th>
+                            <td class="text-break"><code>{{ origin }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Referer header</th>
+                            <td class="text-break"><code>{{ referer }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>Browser / app</th>
+                            <td class="text-break small"><code>{{ user_agent }}</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6">Test a form submission</h2>
+                <p class="text-muted small">
+                    Submitting this form sends a POST with the CSRF token. If you
+                    see a security error instead of a green message, this app is
+                    not storing cookies.
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Send test form
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-light border small">
+            <strong>If “CSRF cookie received” says No:</strong>
+            this app or browser is blocking cookies. Remove the home-screen icon,
+            open the site in Safari or Chrome, log in there, then add it to the
+            home screen again.
+        </div>
+    </div>
+</div>
+{% endblock %}

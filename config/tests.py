@@ -127,3 +127,17 @@ class CsrfProtectionTests(TestCase):
             if host.startswith('.') or host == '*':
                 continue
             self.assertIn(f'https://{host}', settings.CSRF_TRUSTED_ORIGINS)
+
+    def test_diagnostics_page_renders(self):
+        response = self.client.get(reverse('diagnostics'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Connection check')
+        self.assertContains(response, 'Test a form submission')
+
+    def test_diagnostics_form_submission_is_accepted_with_a_token(self):
+        client = Client(enforce_csrf_checks=True)
+        page = client.get(reverse('diagnostics'))
+        token = page.cookies['csrftoken'].value
+        response = client.post(reverse('diagnostics'), {'csrfmiddlewaretoken': token})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'was accepted')

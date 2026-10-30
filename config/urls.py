@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
-from .views import service_worker
+from .views import diagnostics, service_worker
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -21,6 +21,9 @@ urlpatterns = [
         TemplateView.as_view(template_name='pwa/offline.html'),
         name='offline',
     ),
+
+    # Support tooling for login/CSRF problems on mobile.
+    path('support/diagnostics/', diagnostics, name='diagnostics'),
 ]
 
 if settings.DEBUG:
