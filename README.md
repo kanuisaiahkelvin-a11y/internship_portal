@@ -146,11 +146,13 @@ All demo accounts use the password `demo12345`.
 | Student — Alex Cruz | `student@university.test` |
 | Student — Maria Santos | `student2@university.test` |
 
-The Django admin is available at <http://127.0.0.1:8000/admin/>. Create a superuser with:
+The Django admin is **hidden**. It is not linked anywhere and anonymous requests to `/admin/` return a 404. To use it, sign in through the normal portal at <http://127.0.0.1:8000/accounts/login/> with a staff account, then open <http://127.0.0.1:8000/admin/>. Create a superuser with:
 
 ```bash
 python manage.py createsuperuser
 ```
+
+Signed-in users who are not staff are redirected to their dashboard. Set `DJANGO_ADMIN_PATH` (for example `manage`) to mount the admin somewhere other than `/admin/`; remember to update your bookmarks. Staff still sign in through the portal either way.
 
 ## Running tests
 
@@ -158,7 +160,7 @@ python manage.py createsuperuser
 python manage.py test
 ```
 
-The suite currently contains 32 tests covering accounts, postings, permissions, applications, interviews, offers, notifications, and dashboards.
+The suite currently contains 69 tests covering accounts, coordinator access requests, postings, permissions, applications, interviews, offers, notifications, dashboards, the hidden admin portal, PWA assets, and CSRF behavior.
 
 Useful checks:
 
@@ -265,14 +267,18 @@ The site goes live at the `.onrender.com` URL shown in the dashboard.
 
 ### 4. Log in
 
+Sign in through the portal, not the admin login page:
+
 ```
-https://YOUR-SERVICE.onrender.com/admin/
+https://YOUR-SERVICE.onrender.com/accounts/login/
 ```
 
 | Field | Value |
 | --- | --- |
 | Email | `admin@internlink.test` |
 | Password | the one you entered during Blueprint creation |
+
+Then open `https://YOUR-SERVICE.onrender.com/admin/`. The admin URL is hidden: anonymous visitors get a 404, and only signed-in staff can reach it.
 
 Demo accounts use the password `demo12345`. To skip the demo dataset, delete the `initialDeployHook` line from `render.yaml` before applying the Blueprint.
 
@@ -285,6 +291,7 @@ Demo accounts use the password `demo12345`. To skip the demo dataset, delete the
 | `DEBUG` | `False` (set by the Blueprint) |
 | `RENDER_EXTERNAL_HOSTNAME` | Injected by Render; added to `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` automatically |
 | `DJANGO_SUPERUSER_*` | Set in `render.yaml`; the password is prompted at creation |
+| `DJANGO_ADMIN_PATH` | Optional; changes the hidden admin URL from `admin` to another path |
 
 If `DATABASE_URL` is missing while `DEBUG=False` on Render, the app refuses to start with a clear error rather than silently using the ephemeral filesystem.
 

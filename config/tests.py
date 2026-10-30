@@ -6,6 +6,8 @@ from django.contrib.staticfiles import finders
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from accounts.models import User
+
 
 class InstallableWebAppTests(TestCase):
     def test_service_worker_is_served_from_the_site_root(self):
@@ -221,3 +223,61 @@ class WebViewCsrfTests(TestCase):
             **self.HTTPS,
         )
         self.assertEqual(response.status_code, 403)
+
+
+class AdminPortalTests(TestCase):
+    """The admin portal is hidden and only reachable by signed-in staff."""
+
+    def setUp(self):
+        self.staff = User.objects.create_superuser(
+            email='admin@test.com',
+            password='admin-pass-4821',
+            first_name='Portal',
+            last_name='Admin',
+        )
+        self.student = User.objects.create_user(
+            email='student@test.com',
+            password='student-pass-4821',
+            first_name='Sam',
+            last_name='Student',
+            role=User.Role.STUDENT,
+        )
+
+    def test_admin_path_defaults_to_admin(self):
+        self.assertEqual(settings.ADMIN_PATH, '/admin/')
+
+    def test_anonymous_gets_404_for_the_admin_index(self):
+        response = self.client.get(settings.ADMIN_PATH)
+        self.assertEqual(response.status_code, 404)
+
+    def test_anonymous_gets_404_for_the_admin_login_page(self):
+        response = self.client.get(settings.ADMIN_PATH + 'login/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_admin_path_without_a_trailing_slash_is_hidden_too(self):
+        response = self.client.get(settings.ADMIN_PATH.rstrip('/'), follow=True)
+        self.assertEqual(response.status_code, 404)
+
+    def test_signed_in_non_staff_is_redirected_to_the_dashboard(self):
+        self.client.force_login(self.student)
+        response = self.client.get(settings.ADMIN_PATH)
+        self.assertRedirects(response, reverse('dashboard:home'))
+
+    def test_signed_in_non_staff_does_not_reach_the_admin_login(self):
+        self.client.force_login(self.student)
+        response = self.client.get(settings.ADMIN_PATH + 'login/')
+        self.assertRedirects(response, reverse('dashboard:home'))
+
+    def test_staff_can_open_the_admin(self):
+        self.client.force_login(self.staff)
+        response = self.client.get(settings.ADMIN_PATH)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Site administration')
+
+    def test_staff_sign_in_through_the_portal_then_reach_the_admin(self):
+        response = self.client.post(
+            reverse('accounts:login'),
+            {'username': self.staff.email, 'password': 'admin-pass-4821'},
+        )
+        self.assertRedirects(response, reverse('dashboard:home'))
+        self.assertEqual(self.client.get(settings.ADMIN_PATH).status_code, 200)

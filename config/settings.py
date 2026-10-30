@@ -49,6 +49,11 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_FAILURE_VIEW = 'config.views.csrf_failure'
 
+# The Django admin is hidden. Anonymous visitors get a 404 and signed-in
+# non-staff users are redirected, so only staff who signed in through the
+# portal can reach it. Change the URL with DJANGO_ADMIN_PATH if desired.
+ADMIN_PATH = '/' + (os.getenv('DJANGO_ADMIN_PATH', 'admin').strip('/') or 'admin') + '/'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -75,6 +80,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'config.middleware.AdminPortalMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 

@@ -7,7 +7,9 @@ from django.views.generic import TemplateView
 from .views import diagnostics, service_worker
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # The path comes from settings.ADMIN_PATH so it can be relocated with
+    # DJANGO_ADMIN_PATH. Access is gated by config.middleware.AdminPortalMiddleware.
+    path(settings.ADMIN_PATH.strip('/') + '/', admin.site.urls),
     path('', include('dashboard.urls')),
     path('accounts/', include('accounts.urls')),
     path('opportunities/', include('opportunities.urls')),

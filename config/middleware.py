@@ -14,6 +14,11 @@ without a valid token is still rejected.
 
 from urllib.parse import urlsplit
 
+from django.conf import settings
+from django.contrib import messages
+from django.http import Http404
+from django.shortcuts import redirect
+
 SAFE_METHODS = frozenset({'GET', 'HEAD', 'OPTIONS', 'TRACE'})
 
 
@@ -58,3 +63,37 @@ class NormalizeCsrfHeadersMiddleware:
         request.META['HTTP_ORIGIN'] = own_origin
         if not referer:
             request.META['HTTP_REFERER'] = f'{own_origin}/'
+
+
+class AdminPortalMiddleware:
+    """Hide the Django admin behind a signed-in staff check.
+
+    The admin is never advertised: an anonymous request to the admin path gets
+    a 404, exactly as if nothing were mounted there, so scanners and casual
+    visitors cannot find it. A signed-in user without staff access is sent back
+    to their dashboard with an explanation. Staff pass through to the admin and
+    its usual permission checks.
+
+    Staff sign in through the regular portal login (``/accounts/login/``), not
+    the admin login page, because the admin login is hidden along with the rest.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        admin_path = settings.ADMIN_PATH
+        bare_path = admin_path.rstrip('/')
+        if request.path_info == bare_path or request.path_info.startswith(
+            admin_path
+        ):
+            user = getattr(request, 'user', None)
+            if user is None or not user.is_authenticated:
+                raise Http404('Not found')
+            if not user.is_staff:
+                messages.error(
+                    request,
+                    'The admin portal is restricted to administrators.',
+                )
+                return redirect('dashboard:home')
+        return self.get_response(request)
