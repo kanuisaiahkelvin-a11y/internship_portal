@@ -24,6 +24,15 @@ class DashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Find the right place')
 
+    def test_landing_page_describes_the_three_portals(self):
+        response = self.client.get(reverse('dashboard:home'))
+        self.assertContains(response, 'One platform, three portals')
+        self.assertContains(response, 'Student portal')
+        self.assertContains(response, 'Company / employer portal')
+        self.assertContains(response, 'University / admin portal')
+        self.assertContains(response, 'Post internships and manage applicants')
+        self.assertContains(response, 'Monitor students and placements')
+
     def test_each_role_dashboard_renders(self):
         for user in (self.student, self.employer, self.coordinator):
             self.client.force_login(user)

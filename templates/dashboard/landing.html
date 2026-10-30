@@ -72,34 +72,76 @@
     {% endfor %}
 </div>
 
-<div class="row g-4 mt-5">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <span class="stat-icon mb-3"><i class="bi bi-person-plus"></i></span>
-                <h5>Create a student profile</h5>
-                <p class="muted small mb-0">Add your school, course, skills, and resume so employers know who you are.</p>
+<section class="mt-5" id="portals">
+    <div class="text-center mb-4">
+        <h2 class="section-title">One platform, three portals</h2>
+        <p class="muted mb-0">
+            Students, employers, and the internship office each get a workspace
+            built for their job.
+        </p>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <span class="stat-icon mb-3"><i class="bi bi-mortarboard"></i></span>
+                    <h5>Student portal</h5>
+                    <p class="muted small">
+                        Find placements that match your course and apply without
+                        paperwork.
+                    </p>
+                    <ul class="small muted ps-3 mb-4">
+                        <li>Browse verified internship openings</li>
+                        <li>Apply with your profile and resume</li>
+                        <li>Track every step from shortlist to offer</li>
+                    </ul>
+                    <a href="{% url 'opportunities:posting_list' %}" class="btn btn-outline-primary btn-sm mt-auto">
+                        Browse internships
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <span class="stat-icon mb-3"><i class="bi bi-building"></i></span>
+                    <h5>Company / employer portal</h5>
+                    <p class="muted small">
+                        Post internships and manage applicants from one dashboard.
+                    </p>
+                    <ul class="small muted ps-3 mb-4">
+                        <li>Publish postings after coordinator approval</li>
+                        <li>Shortlist, schedule interviews, and send offers</li>
+                        <li>Keep your company profile verified</li>
+                    </ul>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-sm mt-auto">
+                        Post an internship
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <span class="stat-icon mb-3"><i class="bi bi-bank"></i></span>
+                    <h5>University / admin portal</h5>
+                    <p class="muted small">
+                        Monitor students and placements across every employer.
+                    </p>
+                    <ul class="small muted ps-3 mb-4">
+                        <li>Approve postings and verify companies</li>
+                        <li>Follow each student through the pipeline</li>
+                        <li>Export placement reports and rates</li>
+                    </ul>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm mt-auto">
+                        Coordinator sign in
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <span class="stat-icon mb-3"><i class="bi bi-send"></i></span>
-                <h5>Apply and track progress</h5>
-                <p class="muted small mb-0">Follow your application from review to interview, offer, and acceptance.</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <span class="stat-icon mb-3"><i class="bi bi-building-add"></i></span>
-                <h5>Hiring interns?</h5>
-                <p class="muted small mb-3">Post opportunities and manage applicants from one dashboard.</p>
-                <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-sm">Post an internship</a>
-            </div>
-        </div>
-    </div>
-</div>
+    <p class="text-center small muted mt-3 mb-0">
+        Coordinator accounts are created by the internship office administrator.
+    </p>
+</section>
 {% endblock %}

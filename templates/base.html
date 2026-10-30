@@ -172,6 +172,11 @@
     <footer class="app-footer mt-5 py-4">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
             <span>&copy; {% now "Y" %} InternLink — internship placement portal</span>
+            <nav class="small d-flex flex-wrap gap-3">
+                <a href="{% url 'dashboard:home' %}#portals">For students</a>
+                <a href="{% url 'dashboard:home' %}#portals">For employers</a>
+                <a href="{% url 'dashboard:home' %}#portals">For universities</a>
+            </nav>
             <span class="small text-muted">Built with Django</span>
         </div>
     </footer>
