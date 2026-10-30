@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ student.full_name|default:student.email }} — Student record{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="d-flex align-items-center gap-3">
+        <span class="company-logo company-logo-lg">{{ student.first_name|default:student.email|first|upper }}</span>
+        <div>
+            <h1 class="mb-0">{{ student.full_name|default:student.email }}</h1>
+            <p class="muted mb-0">
+                <span class="badge badge-soft">Student</span>
+                <span class="ms-2">{{ student.email }}</span>
+            </p>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'accounts:profile_detail' student.pk %}" class="btn btn-outline-primary">Profile</a>
+        <a href="{% url 'dashboard:student_records' %}" class="btn btn-outline-secondary">All students</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ application_count }}</div>
+            <div class="stat-label">Applications</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ interview_count }}</div>
+            <div class="stat-label">Interviews</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ offer_count }}</div>
+            <div class="stat-label">Offers received</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{% if accepted %}Yes{% else %}No{% endif %}</div>
+            <div class="stat-label">Placed</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        {% if accepted %}
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Internship record</strong>
+                <span class="badge badge-soft-success">Accepted</span>
+            </div>
+            <div class="card-body">
+                <h5 class="mb-1">{{ accepted.posting.title }}</h5>
+                <p class="muted mb-3">
+                    {{ accepted.posting.company.name }}
+                    {% if accepted.posting.company.location %}· {{ accepted.posting.company.location }}{% endif %}
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="small muted">Start date</div>
+                        <div class="fw-semibold">{{ accepted_offer.start_date|date:"F j, Y"|default:"—" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small muted">End date</div>
+                        <div class="fw-semibold">{{ accepted_offer.end_date|date:"F j, Y"|default:"—" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small muted">Stipend</div>
+                        <div class="fw-semibold">{{ accepted_offer.stipend|default:"—" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small muted">Accepted on</div>
+                        <div class="fw-semibold">{{ accepted.updated_at|date:"F j, Y" }}</div>
+                    </div>
+                </div>
+                {% if accepted_offer.details %}
+                <hr>
+                <div class="small muted mb-1">Offer details</div>
+                <p class="mb-0">{{ accepted_offer.details|linebreaksbr }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            No accepted internship yet. This student is still in the pipeline.
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Applications</strong></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Internship</th>
+                            <th>Status</th>
+                            <th class="text-center">Interviews</th>
+                            <th>Applied</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ application.posting.title }}</div>
+                                <div class="small muted">{{ application.posting.company.name }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span>
+                            </td>
+                            <td class="text-center">{{ application.interview_list|length }}</td>
+                            <td class="small">{{ application.created_at|date:"M j, Y" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'applications:detail' application.pk %}" class="btn btn-sm btn-outline-primary">Open</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center muted py-4">No applications yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Interview history</strong></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Internship</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for interview in interviews %}
+                        <tr>
+                            <td class="small">{{ interview.scheduled_at|date:"M j, Y g:i A" }}</td>
+                            <td>
+                                <div class="small fw-semibold">{{ interview.application.posting.title }}</div>
+                                <div class="small muted">{{ interview.application.posting.company.name }}</div>
+                            </td>
+                            <td class="small">{{ interview.get_mode_display }}</td>
+                            <td>
+                                <span class="badge badge-soft">{{ interview.get_status_display }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center muted py-4">No interviews scheduled yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Student information</strong></div>
+            <div class="card-body">
+                {% if profile %}
+                <div class="small muted">School</div>
+                <div class="fw-semibold mb-3">{{ profile.school|default:"—" }}</div>
+                <div class="small muted">Course</div>
+                <div class="fw-semibold mb-3">{{ profile.course|default:"—" }}</div>
+                <div class="small muted">Year level</div>
+                <div class="fw-semibold mb-3">{{ profile.get_year_level_display|default:"—" }}</div>
+                <div class="small muted">Expected graduation</div>
+                <div class="fw-semibold mb-3">{{ profile.expected_graduation|date:"F Y"|default:"—" }}</div>
+                <div class="small muted">Location</div>
+                <div class="fw-semibold mb-3">{{ profile.location|default:"—" }}</div>
+                <div class="small muted">Resume</div>
+                {% if profile.resume %}
+                <a href="{{ profile.resume.url }}" target="_blank" class="fw-semibold">
+                    <i class="bi bi-file-earmark-pdf"></i> Download resume
+                </a>
+                {% else %}
+                <span class="muted">Not uploaded</span>
+                {% endif %}
+                {% if profile.skill_list %}
+                <hr>
+                <div class="small muted mb-2">Skills</div>
+                {% for skill in profile.skill_list %}<span class="skill-chip">{{ skill }}</span>{% endfor %}
+                {% endif %}
+                {% if profile.bio %}
+                <hr>
+                <div class="small muted mb-1">About</div>
+                <p class="mb-0">{{ profile.bio|linebreaksbr }}</p>
+                {% endif %}
+                {% if profile.linkedin_url or profile.portfolio_url %}
+                <hr>
+                <div class="d-flex gap-3">
+                    {% if profile.linkedin_url %}<a href="{{ profile.linkedin_url }}" target="_blank"><i class="bi bi-linkedin"></i> LinkedIn</a>{% endif %}
+                    {% if profile.portfolio_url %}<a href="{{ profile.portfolio_url }}" target="_blank"><i class="bi bi-globe"></i> Portfolio</a>{% endif %}
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="muted mb-0">This student has not completed their profile yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Account</strong></div>
+            <div class="card-body">
+                <div class="small muted">Email</div>
+                <div class="fw-semibold mb-3">{{ student.email }}</div>
+                <div class="small muted">Member since</div>
+                <div class="fw-semibold mb-3">{{ student.date_joined|date:"F j, Y" }}</div>
+                <div class="small muted">Last login</div>
+                <div class="fw-semibold">{{ student.last_login|date:"M j, Y g:i A"|default:"—" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

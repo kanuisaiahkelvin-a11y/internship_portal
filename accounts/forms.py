@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
-from .models import CoordinatorRequest, EmployerProfile, StudentProfile, User
+from .models import EmployerProfile, StudentProfile, User
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -74,26 +74,3 @@ class UserAccountForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'phone')
-
-
-class CoordinatorRequestForm(forms.ModelForm):
-    class Meta:
-        model = CoordinatorRequest
-        fields = ('full_name', 'institution', 'email', 'message')
-        widgets = {
-            'message': forms.Textarea(attrs={'rows': 3}),
-        }
-
-    def clean_email(self):
-        email = self.cleaned_data['email'].lower()
-        if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError(
-                'An account with this email already exists. Log in instead.'
-            )
-        if CoordinatorRequest.objects.filter(
-            email__iexact=email, status=CoordinatorRequest.Status.PENDING
-        ).exists():
-            raise forms.ValidationError(
-                'A request for this email is already waiting for review.'
-            )
-        return email

@@ -1,6 +1,8 @@
 # InternLink — Internship Placement Portal
 
-A standalone Django application that connects students looking for internships with employers, with an internship coordinator overseeing the whole process. It covers the full placement pipeline: company and posting approval, applications, shortlisting, interviews, offers, and acceptance.
+A standalone Django application that connects students looking for internships with employers, with a single internship coordinator overseeing the whole process. It covers the full placement pipeline: company and posting approval, applications, shortlisting, interviews, offers, and acceptance.
+
+The public homepage presents two portals — **students** and **employers**. The coordinator is the system administrator account and is not advertised or self-service; the coordinator workspace is only reachable after signing in.
 
 This project is independent of the existing `hrmo_tracker` project and has its own database, settings, and virtual environment.
 
@@ -30,9 +32,11 @@ This project is independent of the existing `hrmo_tracker` project and has its o
 - Access reports for their own postings.
 
 ### Internship Coordinator
+- One coordinator account for the whole system, created by the administrator.
 - Review the posting queue and approve, reject, or publish submissions.
 - Verify companies.
-- Approve or reject university access requests and send invite links.
+- View a **Student records** list of every student with application, interview, and placement totals.
+- Open a per-student record showing profile details, resume, application history, interviews, offers, and the accepted internship.
 - Access all postings, applications, companies, and reports.
 - Oversee pipeline activity across every employer.
 - Use the Django admin for full data administration.
@@ -160,7 +164,7 @@ Signed-in users who are not staff are redirected to their dashboard. Set `DJANGO
 python manage.py test
 ```
 
-The suite currently contains 69 tests covering accounts, coordinator access requests, postings, permissions, applications, interviews, offers, notifications, dashboards, the hidden admin portal, PWA assets, and CSRF behavior.
+The suite currently contains 66 tests covering accounts, postings, permissions, applications, interviews, offers, notifications, dashboards, student records, the hidden admin portal, PWA assets, and CSRF behavior.
 
 Useful checks:
 
@@ -199,28 +203,19 @@ internship_portal/
 - **Coordinators** have read/write oversight of all companies, postings, applications, and reports.
 - Object-level checks are implemented in views and query scoping, not only in templates.
 
-## Coordinator access requests
+## The single coordinator
 
-Coordinator accounts are never self-registered. The flow is:
+There is exactly one coordinator role in the system, and it is held by the administrator. Coordinator accounts are never self-registered and there is no public access-request flow.
 
+Create (or update) the coordinator with a superuser account:
+
+```bash
+python manage.py createsuperuser
 ```
-university submits request ──► coordinator approves ──► invite link ──► password set ──► signed in
-                            └► coordinator rejects
-```
 
-1. The university opens `/accounts/coordinator/request/` (linked from the landing
-   page and the sign-up page) and submits name, institution, email, and an
-   optional note.
-2. Every coordinator gets an in-app notification. Pending requests appear in a
-   **Coordinator access requests** card on the coordinator dashboard.
-3. Approving creates the coordinator account with an unusable password, generates
-   a one-time invite link, and emails it. The link is also shown on the dashboard
-   so it can be copied and sent directly.
-4. The invitee opens the link, sets a password, and is signed in automatically.
-   The link stops working after one use.
+Then make sure the account's role is `coordinator` (the Django admin user form exposes the role field, and `python manage.py bootstrap` creates or updates a coordinator superuser from environment variables). Signed in as that account, the coordinator can open **Student records** from the navbar or dashboard at `/students/`, then open any student to see their full internship record.
 
-Email uses Django's console backend by default, so the message is printed to the
-server log. Configure `EMAIL_BACKEND` with real SMTP credentials to deliver it.
+The public homepage and sign-up page do not link to the coordinator workspace, and anonymous visitors cannot reach it.
 
 ## File uploads
 

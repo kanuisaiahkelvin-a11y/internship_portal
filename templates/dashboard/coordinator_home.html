@@ -8,6 +8,9 @@
         <p class="muted mb-0">Oversee companies, postings, and student placements.</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'dashboard:student_records' %}" class="btn btn-outline-primary">
+            <i class="bi bi-people"></i> Student records
+        </a>
         <a href="{% url 'opportunities:review_postings' %}" class="btn btn-primary">
             <i class="bi bi-clipboard-check"></i> Review queue
             {% if pending_count %}<span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>{% endif %}
@@ -45,75 +48,6 @@
 
 <div class="row g-4">
     <div class="col-lg-7">
-        {% if coordinator_requests or approved_requests %}
-        <div class="card mb-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>Coordinator access requests</strong>
-                {% if coordinator_request_count %}
-                <span class="badge bg-primary">{{ coordinator_request_count }} pending</span>
-                {% endif %}
-            </div>
-            {% if coordinator_requests %}
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr><th>Requester</th><th>Email</th><th></th></tr>
-                    </thead>
-                    <tbody>
-                        {% for access_request in coordinator_requests %}
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">{{ access_request.full_name }}</div>
-                                <div class="small muted">{{ access_request.institution }}</div>
-                                {% if access_request.message %}
-                                <div class="small muted fst-italic">{{ access_request.message|truncatechars:90 }}</div>
-                                {% endif %}
-                            </td>
-                            <td class="small">{{ access_request.email }}</td>
-                            <td class="text-end text-nowrap">
-                                <form method="post" action="{% url 'accounts:coordinator_request_approve' access_request.pk %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                                </form>
-                                <form method="post" action="{% url 'accounts:coordinator_request_reject' access_request.pk %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Reject</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-            {% if approved_requests %}
-            <div class="list-group list-group-flush">
-                {% for access_request in approved_requests %}
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-semibold">{{ access_request.full_name }}</div>
-                            <div class="small muted">{{ access_request.institution }} · {{ access_request.email }}</div>
-                        </div>
-                        <span class="badge badge-soft-warning">Awaiting password</span>
-                    </div>
-                    <label class="form-label small muted mt-2 mb-1" for="invite-{{ access_request.pk }}">
-                        Invite link — send this to them:
-                    </label>
-                    <input
-                        class="form-control form-control-sm"
-                        id="invite-{{ access_request.pk }}"
-                        type="text"
-                        readonly
-                        value="{{ request.scheme }}://{{ request.get_host }}{% url 'accounts:coordinator_invite' access_request.invite_token %}"
-                    >
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-
         <div class="card mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <strong>Postings awaiting review</strong>

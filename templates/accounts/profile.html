@@ -106,9 +106,10 @@
         <div class="card">
             <div class="card-body">
                 <h5>Coordinator workspace</h5>
-                <p class="muted mb-3">Review company postings, verify organizations, and monitor placements.</p>
+                <p class="muted mb-3">Review company postings, verify organizations, and monitor student placements.</p>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="{% url 'opportunities:review_postings' %}" class="btn btn-primary btn-sm">Review queue</a>
+                    <a href="{% url 'dashboard:student_records' %}" class="btn btn-primary btn-sm">Student records</a>
+                    <a href="{% url 'opportunities:review_postings' %}" class="btn btn-outline-primary btn-sm">Review queue</a>
                     <a href="{% url 'applications:review_list' %}" class="btn btn-outline-primary btn-sm">All applications</a>
                     <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-secondary btn-sm">Reports</a>
                 </div>

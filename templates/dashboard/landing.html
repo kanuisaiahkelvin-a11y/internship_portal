@@ -74,14 +74,13 @@
 
 <section class="mt-5" id="portals">
     <div class="text-center mb-4">
-        <h2 class="section-title">One platform, three portals</h2>
+        <h2 class="section-title">One platform, two portals</h2>
         <p class="muted mb-0">
-            Students, employers, and the internship office each get a workspace
-            built for their job.
+            Students and employers each get a workspace built for their job.
         </p>
     </div>
     <div class="row g-4">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
                     <span class="stat-icon mb-3"><i class="bi bi-mortarboard"></i></span>
@@ -101,7 +100,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
                     <span class="stat-icon mb-3"><i class="bi bi-building"></i></span>
@@ -120,34 +119,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column">
-                    <span class="stat-icon mb-3"><i class="bi bi-bank"></i></span>
-                    <h5>University / admin portal</h5>
-                    <p class="muted small">
-                        Monitor students and placements across every employer.
-                    </p>
-                    <ul class="small muted ps-3 mb-4">
-                        <li>Approve postings and verify companies</li>
-                        <li>Follow each student through the pipeline</li>
-                        <li>Export placement reports and rates</li>
-                    </ul>
-                    <div class="d-grid gap-2 mt-auto">
-                        <a href="{% url 'accounts:coordinator_request' %}" class="btn btn-primary btn-sm">
-                            Request coordinator access
-                        </a>
-                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm">
-                            Coordinator sign in
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-    <p class="text-center small muted mt-3 mb-0">
-        University access requests are reviewed by the internship office before
-        an account is created.
-    </p>
 </section>
 {% endblock %}

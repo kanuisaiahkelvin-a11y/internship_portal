@@ -1,14 +1,14 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render
 from django.utils import timezone
 
 from accounts.mixins import CoordinatorRequiredMixin
-from accounts.models import CoordinatorRequest, User
+from accounts.models import User
 from applications.models import Application, Interview
 from opportunities.models import Company, InternshipPosting
-from django.views.generic import TemplateView
+from django.views.generic import DetailView, TemplateView
 
 
 def home(request):
@@ -164,16 +164,6 @@ def home(request):
             'pending_count': InternshipPosting.objects.filter(
                 status=InternshipPosting.Status.PENDING
             ).count(),
-            'coordinator_requests': CoordinatorRequest.objects.filter(
-                status=CoordinatorRequest.Status.PENDING
-            )[:8],
-            'coordinator_request_count': CoordinatorRequest.objects.filter(
-                status=CoordinatorRequest.Status.PENDING
-            ).count(),
-            'approved_requests': CoordinatorRequest.objects.filter(
-                status=CoordinatorRequest.Status.APPROVED,
-                invite_token__isnull=False,
-            )[:5],
             'unverified_companies': Company.objects.filter(is_verified=False).count(),
             'application_count': applications.count(),
             'status_counts': status_counts,
@@ -238,6 +228,137 @@ class ReportsView(CoordinatorRequiredMixin, TemplateView):
                 'top_postings': InternshipPosting.objects.annotate(
                     application_total=Count('applications')
                 ).order_by('-application_total')[:10],
+            }
+        )
+        return context
+
+
+class StudentRecordsView(CoordinatorRequiredMixin, TemplateView):
+    """The coordinator's view of every student and their internship record."""
+
+    template_name = 'dashboard/student_records.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        search = self.request.GET.get('q', '').strip()
+        students = (
+            User.objects.filter(role=User.Role.STUDENT)
+            .select_related('student_profile')
+            .prefetch_related(
+                Prefetch(
+                    'applications',
+                    queryset=Application.objects.select_related(
+                        'posting__company'
+                    ).prefetch_related('interviews'),
+                )
+            )
+            .order_by('first_name', 'last_name', 'email')
+        )
+        if search:
+            students = students.filter(
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(email__icontains=search)
+            )
+
+        rows = []
+        for student in students:
+            applications = list(student.applications.all())
+            accepted = next(
+                (
+                    application
+                    for application in applications
+                    if application.status == Application.Status.ACCEPTED
+                ),
+                None,
+            )
+            rows.append(
+                {
+                    'student': student,
+                    'profile': getattr(student, 'student_profile', None),
+                    'application_count': len(applications),
+                    'active_count': sum(
+                        1
+                        for application in applications
+                        if application.status
+                        not in (
+                            Application.Status.ACCEPTED,
+                            Application.Status.REJECTED,
+                            Application.Status.WITHDRAWN,
+                        )
+                    ),
+                    'interview_count': sum(
+                        len(application.interviews.all())
+                        for application in applications
+                    ),
+                    'accepted': accepted,
+                }
+            )
+
+        context.update(
+            {
+                'rows': rows,
+                'search': search,
+                'student_total': len(rows),
+                'placed_total': sum(1 for row in rows if row['accepted']),
+                'unplaced_total': sum(1 for row in rows if not row['accepted']),
+            }
+        )
+        return context
+
+
+class StudentRecordDetailView(CoordinatorRequiredMixin, DetailView):
+    """One student's profile, applications, interviews, and placement."""
+
+    model = User
+    template_name = 'dashboard/student_record_detail.html'
+    context_object_name = 'student'
+
+    def get_queryset(self):
+        return User.objects.filter(role=User.Role.STUDENT).select_related(
+            'student_profile'
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        applications = list(
+            self.object.applications.select_related('posting__company')
+            .prefetch_related(
+                Prefetch(
+                    'interviews',
+                    queryset=Interview.objects.select_related(
+                        'application__posting__company'
+                    ),
+                )
+            )
+            .order_by('-created_at')
+        )
+        interviews = []
+        for application in applications:
+            application.offer_record = getattr(application, 'offer', None)
+            application.interview_list = list(application.interviews.all())
+            interviews.extend(application.interview_list)
+
+        accepted = next(
+            (
+                application
+                for application in applications
+                if application.status == Application.Status.ACCEPTED
+            ),
+            None,
+        )
+        context.update(
+            {
+                'profile': getattr(self.object, 'student_profile', None),
+                'applications': applications,
+                'interviews': interviews,
+                'accepted': accepted,
+                'accepted_offer': getattr(accepted, 'offer', None) if accepted else None,
+                'application_count': len(applications),
+                'interview_count': len(interviews),
+                'offer_count': sum(
+                    1 for application in applications if application.offer_record
+                ),
             }
         )
         return context

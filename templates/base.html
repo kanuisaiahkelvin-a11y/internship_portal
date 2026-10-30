@@ -66,6 +66,11 @@
                     {% endif %}
                     {% if user.is_authenticated and user.is_coordinator %}
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard:student_records' %}">
+                            <i class="bi bi-people"></i> Students
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'opportunities:review_postings' %}">
                             <i class="bi bi-clipboard-check"></i> Review queue
                         </a>
@@ -175,7 +180,6 @@
             <nav class="small d-flex flex-wrap gap-3">
                 <a href="{% url 'dashboard:home' %}#portals">For students</a>
                 <a href="{% url 'dashboard:home' %}#portals">For employers</a>
-                <a href="{% url 'dashboard:home' %}#portals">For universities</a>
             </nav>
             <span class="small text-muted">Built with Django</span>
         </div>
