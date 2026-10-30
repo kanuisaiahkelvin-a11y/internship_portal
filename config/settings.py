@@ -141,8 +141,11 @@ STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
+    # Compressed (not manifest) storage: WhiteNoise still serves gzip/brotli
+    # variants, but static URLs stay stable so the app runs without a
+    # collectstatic manifest (tests, fresh checkouts, first boot).
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
 

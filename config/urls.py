@@ -2,6 +2,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
+
+from .views import service_worker
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -10,6 +13,14 @@ urlpatterns = [
     path('opportunities/', include('opportunities.urls')),
     path('applications/', include('applications.urls')),
     path('notifications/', include('notifications.urls')),
+
+    # Installable web app (PWA).
+    path('sw.js', service_worker, name='service_worker'),
+    path(
+        'offline/',
+        TemplateView.as_view(template_name='pwa/offline.html'),
+        name='offline',
+    ),
 ]
 
 if settings.DEBUG:

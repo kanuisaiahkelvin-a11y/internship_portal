@@ -176,8 +176,9 @@ internship_portal/
 ├── dashboard/         # Role-aware dashboards and reports
 ├── notifications/     # In-app notifications
 ├── opportunities/     # Companies, internship postings, bookmarks
-├── static/            # Project CSS and assets
-├── templates/         # Shared and app templates
+├── static/            # Project CSS, JS, PWA manifest, app icons
+├── templates/         # Shared and app templates (incl. pwa/)
+├── tools/             # Developer scripts (icon generator)
 ├── manage.py
 ├── requirements.txt
 ├── build.sh            # Render build script
@@ -304,6 +305,109 @@ Render's filesystem is ephemeral. To keep uploaded resumes, set these on the web
 - **Railway** — create a Python service and PostgreSQL database, then use the included `Procfile` and set the same environment variables.
 - **PythonAnywhere** — works well with SQLite for a small academic deployment; configure a manual WSGI app and run `collectstatic`.
 - **VPS (DigitalOcean, Linode, AWS EC2)** — use Nginx + Gunicorn + PostgreSQL, and serve media through Nginx or object storage.
+
+## Use it as a mobile app (iOS and Android)
+
+The site ships as a **Progressive Web App (PWA)**. It installs to a phone home screen, launches full screen with no browser address bar, and updates automatically whenever you deploy. No app store and no second codebase.
+
+### What is included
+
+| Piece | Location |
+| --- | --- |
+| Web app manifest | `static/manifest.json` |
+| Service worker | `templates/pwa/sw.js`, served at `/sw.js` |
+| Offline fallback page | `templates/pwa/offline.html` |
+| Icons (192, 512, maskable, Apple touch) | `static/icons/` |
+| Install button and iOS hint | `static/js/pwa.js` |
+| Icon generator | `tools/make_icons.py` |
+
+The service worker caches only public static assets and an offline page. Private HTML is never cached, so signing out cannot expose another user's pages.
+
+### Install on Android
+
+1. Open the deployed site in Chrome.
+2. Tap the **⋮** menu → **Install app** (or **Add to Home screen**).
+3. Confirm. The InternLink icon appears in the app drawer and opens full screen.
+
+Chrome also shows the **Install app** button in the site navbar once the app is installable.
+
+### Install on iPhone and iPad
+
+1. Open the site in **Safari**. iOS only installs from Safari, not Chrome.
+2. Tap **Share** → **Add to Home Screen** → **Add**.
+3. Launch it from the home screen.
+
+iOS visitors see a one-time hint bar with these steps; it can be dismissed.
+
+### Regenerate the icons
+
+```bash
+python tools/make_icons.py
+```
+
+The script uses only the standard library, so it works without Pillow installed.
+
+### Limits of the PWA route
+
+- The site must be served over HTTPS. Render provides this automatically.
+- The app is shared by link, not listed in the App Store or Google Play.
+- Web push on iOS requires iOS 16.4 or newer and an installed app.
+- Offline support is limited to an offline page; applications cannot be submitted offline.
+
+## Publish to the App Store and Google Play
+
+If you need store listings, wrap the same site with **Capacitor**. It loads your deployed Django app inside a native shell, so there is still only one codebase.
+
+Requirements: Node.js, Android Studio for Android, and Xcode on macOS for iOS.
+
+```bash
+npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android @capacitor/ios
+npx cap init "InternLink" com.yourname.internlink --web-dir=www
+```
+
+Create `capacitor.config.json`:
+
+```json
+{
+  "appId": "com.yourname.internlink",
+  "appName": "InternLink",
+  "webDir": "www",
+  "server": {
+    "url": "https://YOUR-SERVICE.onrender.com",
+    "cleartext": false
+  }
+}
+```
+
+Then:
+
+```bash
+mkdir www
+npx cap add android
+npx cap add ios
+npx cap sync
+npx cap open android
+npx cap open ios
+```
+
+Build and sign the app in Android Studio or Xcode, then upload it to the Play Console or App Store Connect.
+
+### Store requirements to plan for
+
+- **Google Play**: one-time $25 developer registration fee, a privacy policy URL, and a data-safety form.
+- **Apple**: $99/year Apple Developer Program and a Mac for builds.
+- **Apple guideline 4.2** rejects apps that are only a repackaged website. Add native value first — push notifications, offline application drafts, or camera-based resume upload.
+- Both stores require accurate screenshots, descriptions, and a support contact.
+
+## Native app (most work, best experience)
+
+A fully native client is the long-term option:
+
+1. Add Django REST Framework with token or JWT authentication.
+2. Expose postings, applications, notifications, and profiles as JSON endpoints.
+3. Build the client in Flutter or React Native.
+
+The existing server-rendered views keep working; the API is additive. Budget weeks rather than days — the PWA path above is already working today.
 
 ## Production notes
 

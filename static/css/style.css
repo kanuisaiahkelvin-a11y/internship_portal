@@ -17,6 +17,16 @@ body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    overscroll-behavior-y: contain;
+    -webkit-text-size-adjust: 100%;
+}
+
+@supports (min-height: 100dvh) {
+    body {
+        min-height: 100dvh;
+    }
 }
 
 main {
@@ -26,6 +36,18 @@ main {
 .app-navbar {
     background: linear-gradient(120deg, var(--brand-900), var(--brand-700));
     box-shadow: 0 2px 12px rgba(11, 37, 69, 0.18);
+    padding-top: calc(var(--bs-navbar-padding-y, 0.5rem) + env(safe-area-inset-top));
+}
+
+/* Install hint shown to iOS Safari users (no install prompt there). */
+.pwa-hint {
+    background: var(--accent);
+    color: #1f2937;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.pwa-hint .btn-close {
+    opacity: 0.55;
 }
 
 .app-navbar .nav-link {
@@ -261,6 +283,7 @@ main {
     border-top: 1px solid #e6eaf2;
     color: var(--muted);
     font-size: 0.9rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
 .empty-state {

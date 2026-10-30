@@ -1,0 +1,75 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0b2545">
+    <title>You are offline — InternLink</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/favicon-32.png' %}">
+    <style>
+        :root {
+            --brand-900: #0b2545;
+            --brand-700: #13315c;
+            --accent: #f59e0b;
+            --page: #f5f7fb;
+            --ink: #16202e;
+            --muted: #64748b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.25rem;
+            background: var(--page);
+            color: var(--ink);
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            text-align: center;
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+        }
+        .card {
+            background: #fff;
+            border-radius: 1.25rem;
+            box-shadow: 0 18px 40px rgba(11, 37, 69, 0.12);
+            max-width: 26rem;
+            padding: 2.5rem 1.75rem;
+            width: 100%;
+        }
+        .icon {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 1.25rem;
+            background: linear-gradient(120deg, var(--brand-900), var(--brand-700));
+            color: #fff;
+            font-size: 1.75rem;
+        }
+        h1 { font-size: 1.4rem; margin: 0 0 .6rem; }
+        p { color: var(--muted); line-height: 1.55; margin: 0 0 1.5rem; }
+        a.button {
+            display: inline-block;
+            background: var(--accent);
+            color: #1f2937;
+            font-weight: 600;
+            text-decoration: none;
+            padding: .7rem 1.4rem;
+            border-radius: .6rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon" aria-hidden="true">!</div>
+        <h1>You are offline</h1>
+        <p>
+            InternLink needs a connection to load internship listings and update
+            applications. Check your network, then try again.
+        </p>
+        <a class="button" href="/">Try again</a>
+    </div>
+</body>
+</html>
