@@ -180,6 +180,10 @@ internship_portal/
 ├── templates/         # Shared and app templates
 ├── manage.py
 ├── requirements.txt
+├── build.sh            # Render build script
+├── Procfile            # Gunicorn start command
+├── render.yaml         # Render Blueprint (web service + Postgres)
+├── .python-version     # Python version for hosting
 ├── .env.example
 └── README.md
 ```
@@ -198,17 +202,72 @@ internship_portal/
 - Development serves media through Django when `DEBUG=True`.
 - In production, configure a web server or object storage for `MEDIA_ROOT`.
 
+## Deploy to Render (recommended)
+
+The repository includes a `render.yaml` Blueprint, `build.sh`, and `Procfile`, so Render can deploy the project directly from GitHub.
+
+1. Push the project to GitHub.
+2. Sign in at <https://dashboard.render.com/>.
+3. Choose **New → Blueprint**.
+4. Connect your GitHub repository.
+5. Apply the Blueprint. Render creates:
+   - a free Python web service running Gunicorn
+   - a free PostgreSQL database
+6. Wait for the build to finish. The app is live at the `.onrender.com` URL shown in the dashboard.
+
+Render injects `RENDER_EXTERNAL_HOSTNAME`, `DATABASE_URL`, and the generated `DJANGO_SECRET_KEY`. `DEBUG` is set to `False` by the Blueprint.
+
+### After the first deploy
+
+Open the Render **Shell** for the web service and create an admin account:
+
+```bash
+python manage.py createsuperuser
+```
+
+Optionally load the demo data once:
+
+```bash
+python manage.py seed_demo
+```
+
+### Render free-tier limitations
+
+- Free web services spin down after 15 minutes of inactivity and take about a minute to wake up.
+- Free PostgreSQL databases expire 30 days after creation. Upgrade the database or use a free PostgreSQL provider such as Neon for longer-term hosting.
+- Free services have an ephemeral filesystem. Uploaded resumes in `media/` are lost on redeploy. Use Cloudinary, S3, or another object store for permanent uploads.
+- For a persistent production deployment, use a paid web service, a paid database, and object storage.
+
+### Manual Render setup
+
+If you prefer not to use the Blueprint:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `bash build.sh` |
+| Start command | `python -m gunicorn config.wsgi:application --bind 0.0.0.0:$PORT` |
+| `DATABASE_URL` | Render PostgreSQL internal connection string |
+| `DJANGO_SECRET_KEY` | A long random value |
+| `DEBUG` | `False` |
+| `PYTHON_VERSION` | `3.12.6` |
+
+### Other hosting options
+
+- **Railway** — create a Python service and PostgreSQL database, then use the included `Procfile` and set the same environment variables.
+- **PythonAnywhere** — works well with SQLite for a small academic deployment; configure a manual WSGI app and run `collectstatic`.
+- **VPS (DigitalOcean, Linode, AWS EC2)** — use Nginx + Gunicorn + PostgreSQL, and serve media through Nginx or object storage.
+
 ## Production notes
 
 Before deploying:
 
 1. Set a strong `DJANGO_SECRET_KEY`.
 2. Set `DEBUG=False`.
-3. Set `ALLOWED_HOSTS` to your real domains.
-4. Use PostgreSQL or another production database instead of SQLite.
+3. Set `ALLOWED_HOSTS` to your real domains (Render sets `RENDER_EXTERNAL_HOSTNAME` automatically).
+4. Use PostgreSQL or another production database instead of SQLite by setting `DATABASE_URL`.
 5. Configure a real email backend (the default is the console backend).
-6. Run `python manage.py collectstatic` and serve static files through your web server.
-7. Enable HTTPS and secure cookies (already toggled when `DEBUG=False`).
+6. Run `python manage.py collectstatic`; WhiteNoise serves the collected static files.
+7. Enable HTTPS and secure cookies (secure cookies are already toggled when `DEBUG=False`).
 8. Serve uploaded media from a persistent, backed-up location.
 
 ## License
