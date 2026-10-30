@@ -217,18 +217,47 @@ The repository includes a `render.yaml` Blueprint, `build.sh`, and `Procfile`, s
 
 Render injects `RENDER_EXTERNAL_HOSTNAME`, `DATABASE_URL`, and the generated `DJANGO_SECRET_KEY`. `DEBUG` is set to `False` by the Blueprint.
 
-### After the first deploy
+During Blueprint creation, Render prompts for `DJANGO_SUPERUSER_PASSWORD`. Enter a strong password for the admin account. The Blueprint also sets:
 
-Open the Render **Shell** for the web service and create an admin account:
+- `DJANGO_SUPERUSER_EMAIL=admin@internlink.test`
+- `DJANGO_SUPERUSER_FIRST_NAME=Portal`
+- `DJANGO_SUPERUSER_LAST_NAME=Admin`
+
+### First deploy initialization
+
+The `build.sh` script runs migrations and `python manage.py bootstrap`, which creates or updates the admin superuser from the environment variables.
+
+The Blueprint's `initialDeployHook` runs once after the first successful deploy:
 
 ```bash
-python manage.py createsuperuser
+python manage.py bootstrap --seed
 ```
 
-Optionally load the demo data once:
+This creates the admin account and loads the demo dataset. After deployment, log in at:
+
+```
+https://YOUR-SERVICE.onrender.com/admin/
+```
+
+Use `admin@internlink.test` and the password you entered during Blueprint creation. The demo accounts use `demo12345`.
+
+If you prefer no demo data, remove the `initialDeployHook` line from `render.yaml` before applying the Blueprint.
+
+### Manual initialization
+
+If you are not using the Blueprint, set these environment variables on the service:
+
+| Variable | Value |
+| --- | --- |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@internlink.test` |
+| `DJANGO_SUPERUSER_PASSWORD` | A strong password |
+| `DJANGO_SUPERUSER_FIRST_NAME` | `Portal` |
+| `DJANGO_SUPERUSER_LAST_NAME` | `Admin` |
+
+Then run once from the Render Shell (paid plans) or locally against the production database:
 
 ```bash
-python manage.py seed_demo
+python manage.py bootstrap --seed
 ```
 
 ### Render free-tier limitations
@@ -250,6 +279,8 @@ If you prefer not to use the Blueprint:
 | `DJANGO_SECRET_KEY` | A long random value |
 | `DEBUG` | `False` |
 | `PYTHON_VERSION` | `3.12.6` |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@internlink.test` |
+| `DJANGO_SUPERUSER_PASSWORD` | A strong password |
 
 ### Other hosting options
 
