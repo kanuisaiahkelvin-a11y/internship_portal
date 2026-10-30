@@ -3,7 +3,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.staticfiles import finders
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 
@@ -61,3 +61,69 @@ class InstallableWebAppTests(TestCase):
         self.assertContains(response, 'name="theme-color"')
         self.assertContains(response, 'viewport-fit=cover')
         self.assertContains(response, 'js/pwa.js')
+
+
+class CsrfProtectionTests(TestCase):
+    """Mobile browsers are the usual source of CSRF 403s, so keep the flow
+    working and make any failure explain itself."""
+
+    def test_login_page_sets_a_csrf_cookie(self):
+        response = self.client.get(reverse('accounts:login'))
+        self.assertIn('csrftoken', response.cookies)
+
+    def test_register_page_sets_a_csrf_cookie(self):
+        response = self.client.get(reverse('accounts:register'))
+        self.assertIn('csrftoken', response.cookies)
+
+    def test_post_without_csrf_token_renders_a_helpful_page(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.post(
+            reverse('accounts:login'),
+            {'username': 'someone@example.com', 'password': 'wrong-password'},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, 'We could not verify that form', status_code=403)
+        self.assertContains(response, 'Try again', status_code=403)
+        self.assertContains(response, 'Technical details', status_code=403)
+
+    def test_login_works_when_the_csrf_cookie_is_sent(self):
+        client = Client(enforce_csrf_checks=True)
+        page = client.get(reverse('accounts:login'))
+        token = page.cookies['csrftoken'].value
+        response = client.post(
+            reverse('accounts:login'),
+            {
+                'csrfmiddlewaretoken': token,
+                'username': 'missing@example.com',
+                'password': 'wrong-password',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Log in')
+
+    def test_registration_works_when_the_csrf_cookie_is_sent(self):
+        client = Client(enforce_csrf_checks=True)
+        page = client.get(reverse('accounts:register'))
+        token = page.cookies['csrftoken'].value
+        response = client.post(
+            reverse('accounts:register'),
+            {
+                'csrfmiddlewaretoken': token,
+                'first_name': 'Nia',
+                'last_name': 'Reyes',
+                'email': 'nia@example.com',
+                'role': 'student',
+                'password1': 'strong-pass-4821',
+                'password2': 'strong-pass-4821',
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('dashboard:home'))
+
+    def test_trusted_origins_cover_accepted_hosts(self):
+        for host in settings.ALLOWED_HOSTS:
+            if host in ('localhost', '127.0.0.1', 'testserver'):
+                continue
+            if host.startswith('.') or host == '*':
+                continue
+            self.assertIn(f'https://{host}', settings.CSRF_TRUSTED_ORIGINS)

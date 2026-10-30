@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Security check failed — InternLink{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-3">
+                    <i class="bi bi-shield-exclamation display-5 text-warning"></i>
+                </div>
+                <h1 class="h4 text-center mb-3">We could not verify that form</h1>
+
+                {% if hint == 'cookies' %}
+                <p class="text-muted">
+                    Your browser did not send the security cookie that protects
+                    logins and sign-ups, so the form was blocked. Nothing was
+                    submitted and no account was created.
+                </p>
+                <p class="mb-1 fw-semibold">To fix it:</p>
+                <ul class="text-muted">
+                    <li>Allow cookies for this site in your browser settings.</li>
+                    <li>Leave private or incognito mode.</li>
+                    <li>
+                        Open the link in Chrome or Safari — not inside a chat app
+                        such as Messenger, Instagram, Facebook, or Gmail.
+                    </li>
+                </ul>
+                {% elif hint == 'stale' %}
+                <p class="text-muted">
+                    This page was open for a while, or the site was open in more
+                    than one tab, so the security token expired.
+                </p>
+                <p class="mb-1 fw-semibold">To fix it:</p>
+                <ul class="text-muted">
+                    <li>Reload this page and submit the form again.</li>
+                    <li>Close other tabs of this site and retry.</li>
+                </ul>
+                {% elif hint == 'origin' %}
+                <p class="text-muted">
+                    The request came from a browser or app that hides or rewrites
+                    its origin, which the security check refuses.
+                </p>
+                <p class="mb-1 fw-semibold">To fix it:</p>
+                <ul class="text-muted">
+                    <li>Open the site directly in Chrome or Safari.</li>
+                    <li>
+                        If you tapped a link inside Messenger, Instagram, or
+                        Facebook, use the browser menu to open it in the system
+                        browser instead.
+                    </li>
+                </ul>
+                {% else %}
+                <p class="text-muted">
+                    The form was blocked by a security check. Nothing was
+                    submitted and no account was created.
+                </p>
+                <p class="mb-1 fw-semibold">To fix it:</p>
+                <ul class="text-muted">
+                    <li>Reload this page and try again.</li>
+                    <li>Allow cookies for this site.</li>
+                    <li>Open the site in Chrome or Safari, not inside a chat app.</li>
+                </ul>
+                {% endif %}
+
+                <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                    <a class="btn btn-primary" href="{{ retry_url }}">
+                        <i class="bi bi-arrow-clockwise"></i> Try again
+                    </a>
+                    <a class="btn btn-outline-secondary" href="/">Go to homepage</a>
+                </div>
+
+                <details class="mt-4 small text-muted">
+                    <summary>Technical details</summary>
+                    <p class="mt-2 mb-0"><code>{{ reason|default:"No reason reported" }}</code></p>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -34,6 +34,21 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
+# Any host we already accept should also pass Django's CSRF origin check.
+# Without this, a custom domain or a preview URL returns 403 on every form
+# submission (login, sign-up, applications).
+for _host in list(ALLOWED_HOSTS):
+    if _host == '*' or _host.startswith('.') or _host in ('localhost', '127.0.0.1'):
+        continue
+    _origin = f'https://{_host}'
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
+
+# Explicit cookie policy: same-site form posts must carry the CSRF cookie.
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_FAILURE_VIEW = 'config.views.csrf_failure'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -198,3 +213,32 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# Surface security failures (CSRF, 403s) in the hosting platform's logs so a
+# "403 Forbidden" report can be traced to an actual reason.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'internlink': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'django.security': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+    },
+}

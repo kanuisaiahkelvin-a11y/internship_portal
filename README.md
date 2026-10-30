@@ -409,6 +409,34 @@ A fully native client is the long-term option:
 
 The existing server-rendered views keep working; the API is additive. Budget weeks rather than days — the PWA path above is already working today.
 
+## Troubleshooting
+
+### "403 Forbidden" when logging in or signing up on a phone
+
+This is Django's CSRF protection, not a login bug. The browser did not send the
+security cookie that proves the form came from this site. The app logs the exact
+reason under `internlink.security`, for example:
+
+```
+CSRF failure on POST /accounts/login/: CSRF cookie not set. | hint=cookies ...
+```
+
+Common causes and fixes:
+
+| Cause | Fix |
+| --- | --- |
+| Page opened inside Messenger, Instagram, Facebook, or Gmail | Use the app's "open in browser" option, then retry in Chrome or Safari |
+| Private / incognito tab, or cookies blocked | Allow cookies for the site, or leave private mode |
+| Site opened over `http://` | Use the `https://` address — `Secure` cookies are dropped on plain HTTP |
+| Stale tab left open for a long time | Reload the page before submitting |
+| Custom domain not in the trusted list | Add it to `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` |
+
+Any host listed in `ALLOWED_HOSTS` is automatically trusted as an HTTPS origin,
+so custom domains work without extra configuration.
+
+The failure page shows the technical reason under **Technical details**. Share
+that line if the cause is not obvious.
+
 ## Production notes
 
 Before deploying:
