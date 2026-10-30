@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ posting.title }} — InternLink{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{% url 'opportunities:posting_list' %}">Internships</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'opportunities:company_detail' posting.company.pk %}">{{ posting.company.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ posting.title }}</li>
+    </ol>
+</nav>
+
+{% if is_owner and posting.status != 'published' %}
+<div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span>
+        <i class="bi bi-eye-slash"></i> This posting is <strong>{{ posting.get_status_display }}</strong> and is not visible to students.
+        {% if posting.review_notes %}<br><strong>Coordinator notes:</strong> {{ posting.review_notes }}{% endif %}
+    </span>
+    <span class="badge bg-dark">{{ posting.get_status_display }}</span>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if posting.company.logo_url %}
+                        <img src="{{ posting.company.logo_url }}" alt="{{ posting.company.name }}" class="company-logo company-logo-lg">
+                        {% else %}
+                        <span class="company-logo company-logo-lg">{{ posting.company.name|first|upper }}</span>
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'opportunities:company_detail' posting.company.pk %}" class="fw-semibold">
+                                {{ posting.company.name }}
+                                {% if posting.company.is_verified %}<i class="bi bi-patch-check-fill text-primary"></i>{% endif %}
+                            </a>
+                            <div class="small muted">{{ posting.company.industry|default:"Company" }} · {{ posting.company.location }}</div>
+                        </div>
+                    </div>
+                    {% if posting.is_featured %}<span class="badge badge-soft-warning">Featured</span>{% endif %}
+                </div>
+
+                <h1 class="h2 fw-bold">{{ posting.title }}</h1>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="badge badge-soft"><i class="bi bi-geo-alt"></i> {{ posting.location }}</span>
+                    <span class="badge badge-soft"><i class="bi bi-laptop"></i> {{ posting.get_work_mode_display }}</span>
+                    <span class="badge badge-soft"><i class="bi bi-clock"></i> {{ posting.duration_weeks }} weeks · {{ posting.hours_per_week }} hrs/week</span>
+                    <span class="badge badge-soft"><i class="bi bi-people"></i> {{ posting.slots_remaining }} slot{{ posting.slots_remaining|pluralize }} left</span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="small muted">Stipend</div>
+                        <div class="fw-bold">{% if posting.stipend %}{{ posting.stipend|floatformat:0 }} / month{% else %}Unpaid{% endif %}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="small muted">Apply by</div>
+                        <div class="fw-bold">{{ posting.application_deadline|date:"M j, Y" }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="small muted">Start date</div>
+                        <div class="fw-bold">{{ posting.start_date|date:"M j, Y"|default:"Flexible" }}</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="small muted">Applicants</div>
+                        <div class="fw-bold">{{ posting.application_count }}</div>
+                    </div>
+                </div>
+
+                <h5 class="section-title">About the internship</h5>
+                <p>{{ posting.description|linebreaksbr }}</p>
+
+                {% if posting.responsibilities %}
+                <h5 class="section-title mt-4">What you will do</h5>
+                <p>{{ posting.responsibilities|linebreaksbr }}</p>
+                {% endif %}
+
+                {% if posting.requirements %}
+                <h5 class="section-title mt-4">What we are looking for</h5>
+                <p>{{ posting.requirements|linebreaksbr }}</p>
+                {% endif %}
+
+                {% if posting.skill_list %}
+                <h5 class="section-title mt-4">Skills</h5>
+                <div>{% for skill in posting.skill_list %}<span class="skill-chip">{{ skill }}</span>{% endfor %}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_owner and applications %}
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Recent applicants</strong>
+                <a href="{% url 'applications:review_list' %}?posting={{ posting.pk }}" class="small">Review all ({{ application_count }})</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light"><tr><th>Student</th><th>Status</th><th>Applied</th><th></th></tr></thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ application.student.full_name }}</div>
+                                <div class="small muted">{{ application.student.email }}</div>
+                            </td>
+                            <td><span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span></td>
+                            <td class="small muted">{{ application.created_at|date:"M j" }}</td>
+                            <td class="text-end"><a href="{% url 'applications:detail' application.pk %}" class="btn btn-sm btn-outline-primary">Open</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4 sticky-lg-top" style="top: 90px;">
+            <div class="card-body">
+                {% if user.is_authenticated and user.is_student %}
+                    {% if application %}
+                    <div class="alert alert-info small mb-3">
+                        You applied on {{ application.created_at|date:"M j, Y" }}.<br>
+                        Status: <span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span>
+                    </div>
+                    <a href="{% url 'applications:detail' application.pk %}" class="btn btn-primary w-100 mb-2">View my application</a>
+                    {% elif can_apply %}
+                    <a href="{% url 'applications:apply' posting.pk %}" class="btn btn-primary btn-lg w-100 mb-2">
+                        <i class="bi bi-send"></i> Apply now
+                    </a>
+                    {% else %}
+                    <div class="alert alert-secondary small mb-3">
+                        {% if posting.status != 'published' %}This posting is not published.
+                        {% elif posting.slots_remaining == 0 %}All slots are filled.
+                        {% else %}The application deadline has passed.{% endif %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'opportunities:bookmark_toggle' posting.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" class="btn btn-outline-secondary w-100 mb-2">
+                            {% if is_bookmarked %}<i class="bi bi-bookmark-fill"></i> Saved — remove
+                            {% else %}<i class="bi bi-bookmark"></i> Save for later{% endif %}
+                        </button>
+                    </form>
+                {% elif not user.is_authenticated %}
+                    <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="btn btn-primary btn-lg w-100 mb-2">Log in to apply</a>
+                    <p class="small muted text-center mb-0">New here? <a href="{% url 'accounts:register' %}">Create a student account</a>.</p>
+                {% endif %}
+
+                {% if is_owner %}
+                <hr>
+                <h6 class="text-uppercase small muted">Manage posting</h6>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'opportunities:posting_edit' posting.pk %}" class="btn btn-outline-primary btn-sm">Edit posting</a>
+                    {% if posting.status == 'draft' %}
+                    <form method="post" action="{% url 'opportunities:posting_submit' posting.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm w-100">Submit for review</button>
+                    </form>
+                    {% endif %}
+                    {% if user.is_coordinator and posting.status == 'pending' %}
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">Return for revision</button>
+                    {% endif %}
+                    {% if posting.status == 'published' or posting.status == 'pending' %}
+                    <form method="post" action="{% url 'opportunities:posting_close' posting.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">Close posting</button>
+                    </form>
+                    {% endif %}
+                    {% if posting.status == 'draft' or posting.status == 'closed' or user.is_coordinator %}
+                    <a href="{% url 'opportunities:posting_delete' posting.pk %}" class="btn btn-outline-danger btn-sm">Delete posting</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if user.is_coordinator and posting.status == 'pending' %}
+                <hr>
+                <h6 class="text-uppercase small muted">Coordinator review</h6>
+                <form method="post" action="{% url 'opportunities:posting_approve' posting.pk %}" class="mb-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">Approve and publish</button>
+                </form>
+                <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">Return with notes</button>
+                {% endif %}
+
+                {% if not is_owner %}
+                <hr>
+                <h6 class="text-uppercase small muted">Company</h6>
+                <p class="small mb-2">{{ posting.company.description|truncatewords:25 }}</p>
+                <a href="{% url 'opportunities:company_detail' posting.company.pk %}" class="btn btn-outline-secondary btn-sm w-100">View company</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if similar_postings %}
+<h2 class="section-title h5 mt-4 mb-3">More from {{ posting.company.name }}</h2>
+<div class="row g-4">
+    {% for similar in similar_postings %}
+    <div class="col-md-6 col-lg-4">{% include 'partials/posting_card.html' with posting=similar %}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if is_owner or user.is_coordinator %}
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="{% url 'opportunities:posting_reject' posting.pk %}" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title">Return posting with notes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">What should the employer change?</label>
+                <textarea name="review_notes" class="form-control" rows="4" required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Return posting</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

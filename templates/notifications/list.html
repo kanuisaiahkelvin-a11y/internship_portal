@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Notifications</h1>
+        <p class="muted mb-0">Updates about your applications, postings, and account.</p>
+    </div>
+    {% if unread_notifications_count %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-primary btn-sm">Mark all as read</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="list-group list-group-flush">
+        {% for notification in notifications %}
+        <a href="{% url 'notifications:mark_read' notification.pk %}"
+           class="list-group-item list-group-item-action {% if not notification.is_read %}bg-light{% endif %}">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <div class="d-flex gap-3">
+                    <span class="stat-icon"><i class="bi bi-bell{% if notification.is_read %}{% else %}-fill{% endif %}"></i></span>
+                    <div>
+                        <div class="fw-semibold">
+                            {{ notification.title }}
+                            {% if not notification.is_read %}<span class="badge bg-primary ms-1">New</span>{% endif %}
+                        </div>
+                        {% if notification.message %}
+                        <div class="small muted">{{ notification.message }}</div>
+                        {% endif %}
+                        <div class="small muted mt-1">{{ notification.created_at|timesince }} ago</div>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-bell-slash"></i>
+            <p class="mb-0">You have no notifications yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

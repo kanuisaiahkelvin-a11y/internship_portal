@@ -1,0 +1,16 @@
+{% load crispy_forms_tags %}
+{% if form.errors %}
+<div class="alert alert-danger">
+    Please correct the highlighted fields below.
+</div>
+{% endif %}
+<form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
+    {% csrf_token %}
+    {{ form|crispy }}
+    <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">{{ submit_label|default:"Save" }}</button>
+        {% if cancel_url %}
+        <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancel</a>
+        {% endif %}
+    </div>
+</form>

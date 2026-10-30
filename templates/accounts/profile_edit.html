@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Edit profile — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Edit profile</h1>
+        <p class="muted mb-0">Keep your details current so employers and coordinators can reach you.</p>
+    </div>
+    <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">Cancel</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header bg-white"><strong>Account details</strong></div>
+                <div class="card-body">
+                    {{ account_form|crispy }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <strong>
+                        {% if user.is_student %}Student details{% elif user.is_employer %}Employer details{% else %}Profile{% endif %}
+                    </strong>
+                </div>
+                <div class="card-body">
+                    {% if profile_form %}
+                    {{ profile_form|crispy }}
+                    {% else %}
+                    <p class="muted mb-0">Coordinator accounts do not require an additional profile.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

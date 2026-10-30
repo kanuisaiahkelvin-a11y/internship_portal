@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Delete posting — InternLink{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="card">
+        <div class="card-body p-4">
+            <h1 class="h4 fw-bold">Delete this posting?</h1>
+            <p class="muted">
+                You are about to delete <strong>{{ posting.title }}</strong> at {{ posting.company.name }}.
+                Applications attached to it will also be removed. This cannot be undone.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Yes, delete posting</button>
+                    <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

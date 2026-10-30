@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Apply for {{ posting.title }} — InternLink{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{% url 'opportunities:posting_list' %}">Internships</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'opportunities:posting_detail' posting.pk %}">{{ posting.title }}</a></li>
+        <li class="breadcrumb-item active">Apply</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body p-4">
+                <h1 class="h4 fw-bold mb-1">Apply for {{ posting.title }}</h1>
+                <p class="muted mb-4">{{ posting.company.name }} · {{ posting.location }} · {{ posting.get_work_mode_display }}</p>
+
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="alert alert-light border small">
+                        <i class="bi bi-info-circle"></i>
+                        Your application will be sent to {{ posting.company.name }}. You can track its status from your dashboard.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Submit application</button>
+                        <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Internship summary</strong></div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if posting.company.logo_url %}
+                    <img src="{{ posting.company.logo_url }}" alt="{{ posting.company.name }}" class="company-logo">
+                    {% else %}
+                    <span class="company-logo">{{ posting.company.name|first|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">{{ posting.company.name }}</div>
+                        <div class="small muted">{{ posting.company.industry|default:"Company" }}</div>
+                    </div>
+                </div>
+                <div class="small mb-2"><i class="bi bi-geo-alt"></i> {{ posting.location }}</div>
+                <div class="small mb-2"><i class="bi bi-laptop"></i> {{ posting.get_work_mode_display }}</div>
+                <div class="small mb-2"><i class="bi bi-clock"></i> {{ posting.duration_weeks }} weeks · {{ posting.hours_per_week }} hrs/week</div>
+                <div class="small mb-2"><i class="bi bi-cash"></i> {% if posting.stipend %}{{ posting.stipend|floatformat:0 }} / month{% else %}Unpaid{% endif %}</div>
+                <div class="small mb-0"><i class="bi bi-calendar-x"></i> Apply by {{ posting.application_deadline|date:"M j, Y" }}</div>
+            </div>
+        </div>
+        {% with profile=user.student_profile %}
+        {% if profile.resume %}
+        <div class="alert alert-success small">
+            <i class="bi bi-check2-circle"></i> A resume is already on your profile. Leave the upload blank to use it.
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endblock %}

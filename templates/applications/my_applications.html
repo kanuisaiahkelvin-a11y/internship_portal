@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}My applications — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>My applications</h1>
+        <p class="muted mb-0">{{ total_count }} application{{ total_count|pluralize }} submitted</p>
+    </div>
+    <a href="{% url 'opportunities:posting_list' %}" class="btn btn-primary">Find internships</a>
+</div>
+
+<ul class="nav nav-pills mb-3 flex-wrap gap-1">
+    <li class="nav-item">
+        <a class="nav-link {% if not current_status %}active{% endif %}" href="{% url 'applications:my_applications' %}">
+            All <span class="badge bg-light text-dark">{{ total_count }}</span>
+        </a>
+    </li>
+    {% for tab in status_tabs %}
+    <li class="nav-item">
+        <a class="nav-link {% if current_status == tab.value %}active{% endif %}" href="{% url 'applications:my_applications' %}?status={{ tab.value }}">
+            {{ tab.label }} <span class="badge bg-light text-dark">{{ tab.count }}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="row g-3">
+    {% for application in applications %}
+    <div class="col-lg-6">
+        <div class="card card-hover h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div>
+                        <a href="{% url 'applications:detail' application.pk %}" class="fw-bold text-dark h6">
+                            {{ application.posting.title }}
+                        </a>
+                        <div class="small muted">{{ application.posting.company.name }} · {{ application.posting.location }}</div>
+                    </div>
+                    <span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span>
+                </div>
+                <div class="small muted mb-3">
+                    Applied {{ application.created_at|date:"M j, Y" }}
+                    · Updated {{ application.updated_at|timesince }} ago
+                </div>
+                {% if application.status == 'offered' %}
+                <div class="alert alert-success small py-2 mb-3">
+                    <i class="bi bi-award"></i> You have an offer waiting for your response.
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'applications:detail' application.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
+                    <a href="{% url 'opportunities:posting_detail' application.posting.pk %}" class="btn btn-outline-secondary btn-sm">View internship</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card"><div class="empty-state">
+            <i class="bi bi-file-earmark-text"></i>
+            <h5>No applications here</h5>
+            <p class="mb-3">{% if current_status %}No applications with this status.{% else %}Start by browsing internship opportunities.{% endif %}</p>
+            <a href="{% url 'opportunities:posting_list' %}" class="btn btn-primary btn-sm">Browse internships</a>
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}

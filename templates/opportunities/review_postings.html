@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Posting review queue — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Posting review queue</h1>
+        <p class="muted mb-0">{{ pending_count }} posting{{ pending_count|pluralize }} waiting for approval.</p>
+    </div>
+</div>
+
+<ul class="nav nav-pills mb-3">
+    {% for value, label in status_choices %}
+    <li class="nav-item">
+        <a class="nav-link {% if status == value %}active{% endif %}" href="{% url 'opportunities:review_postings' %}?status={{ value }}">{{ label }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Posting</th><th>Company</th><th>Submitted by</th><th>Deadline</th><th>Status</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for posting in postings %}
+                <tr>
+                    <td>
+                        <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="fw-semibold">{{ posting.title }}</a>
+                        <div class="small muted">{{ posting.get_work_mode_display }} · {{ posting.location }}</div>
+                    </td>
+                    <td>
+                        {{ posting.company.name }}
+                        {% if not posting.company.is_verified %}<span class="badge badge-soft-warning">Unverified</span>{% endif %}
+                    </td>
+                    <td class="small">
+                        {{ posting.created_by.full_name }}
+                        <div class="muted">{{ posting.created_at|date:"M j, Y" }}</div>
+                    </td>
+                    <td class="small">{{ posting.application_deadline|date:"M j, Y" }}</td>
+                    <td>
+                        <span class="badge bg-{% if posting.status == 'published' %}success{% elif posting.status == 'pending' %}info{% elif posting.status == 'draft' %}secondary{% else %}dark{% endif %}">
+                            {{ posting.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
+                            {% if posting.status == 'pending' %}
+                            <form method="post" action="{% url 'opportunities:posting_approve' posting.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center muted py-5">
+                    Nothing in this queue.
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

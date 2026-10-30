@@ -1,0 +1,59 @@
+{% load humanize %}
+<div class="card card-hover h-100">
+    <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center gap-2">
+                {% if posting.company.logo_url %}
+                <img src="{{ posting.company.logo_url }}" alt="{{ posting.company.name }}" class="company-logo">
+                {% else %}
+                <span class="company-logo">{{ posting.company.name|first|upper }}</span>
+                {% endif %}
+                <div>
+                    <a href="{% url 'opportunities:company_detail' posting.company.pk %}" class="fw-semibold small text-dark">
+                        {{ posting.company.name }}
+                    </a>
+                    {% if posting.company.is_verified %}
+                    <i class="bi bi-patch-check-fill text-primary" title="Verified company"></i>
+                    {% endif %}
+                    <div class="small muted">{{ posting.company.industry|default:"Company" }}</div>
+                </div>
+            </div>
+            {% if posting.is_featured %}
+            <span class="badge badge-soft-warning">Featured</span>
+            {% endif %}
+        </div>
+
+        <h5 class="card-title mb-2">
+            <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="text-dark">{{ posting.title }}</a>
+        </h5>
+        <p class="small muted mb-3">{{ posting.description|truncatewords:18 }}</p>
+
+        <div class="mb-3">
+            <span class="badge badge-soft">{{ posting.get_work_mode_display }}</span>
+            <span class="badge badge-soft"><i class="bi bi-geo-alt"></i> {{ posting.location }}</span>
+            <span class="badge badge-soft">{{ posting.duration_weeks }} weeks</span>
+        </div>
+
+        <div class="mt-auto">
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+                <span class="fw-semibold">
+                    {% if posting.stipend %}{{ posting.stipend|floatformat:0 }}{% else %}Unpaid{% endif %}
+                    <span class="muted fw-normal">/ month</span>
+                </span>
+                {% if posting.is_deadline_soon %}
+                <span class="badge badge-soft-danger">Closing soon</span>
+                {% else %}
+                <span class="muted">Apply by {{ posting.application_deadline|date:"M j" }}</span>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="btn btn-primary btn-sm flex-grow-1">
+                    View details
+                </a>
+                {% if saved_ids and posting.pk in saved_ids %}
+                <span class="btn btn-outline-secondary btn-sm disabled" title="Saved"><i class="bi bi-bookmark-fill"></i></span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Extend offer — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{% if offer %}Edit offer{% else %}Extend an offer{% endif %}</h1>
+        <p class="muted mb-0">{{ application.student.full_name }} · {{ application.posting.title }}</p>
+    </div>
+    <a href="{% url 'applications:detail' application.pk %}" class="btn btn-outline-secondary">Back to application</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="alert alert-light border small">
+                        The student will be notified and can accept or decline the offer from their application page.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">{% if offer %}Update offer{% else %}Send offer{% endif %}</button>
+                        <a href="{% url 'applications:detail' application.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-white"><strong>Applicant</strong></div>
+            <div class="card-body">
+                <div class="fw-bold">{{ application.student.full_name }}</div>
+                <div class="small muted mb-3">{{ application.student.email }}</div>
+                <div class="small mb-1"><strong>Internship:</strong> {{ application.posting.title }}</div>
+                <div class="small mb-1"><strong>Slots remaining:</strong> {{ application.posting.slots_remaining }}</div>
+                <div class="small mb-1"><strong>Current status:</strong> {{ application.get_status_display }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

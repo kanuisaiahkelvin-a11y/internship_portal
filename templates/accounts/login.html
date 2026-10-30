@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Log in — InternLink{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="text-center mb-4">
+            <span class="stat-icon mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                <i class="bi bi-briefcase-fill"></i>
+            </span>
+            <h1 class="h3 fw-bold mb-1">Welcome back</h1>
+            <p class="muted mb-0">Log in to manage your internships and applications.</p>
+        </div>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary w-100 mt-2">Log in</button>
+        </form>
+        <p class="text-center small muted mt-4 mb-0">
+            New to InternLink? <a href="{% url 'accounts:register' %}">Create an account</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

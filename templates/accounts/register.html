@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Create an account — InternLink{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="card auth-card">
+        <div class="text-center mb-4">
+            <h1 class="h3 fw-bold mb-1">Join InternLink</h1>
+            <p class="muted mb-0">Choose the account type that fits you.</p>
+        </div>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-primary w-100 mt-2">Create account</button>
+        </form>
+        <p class="text-center small muted mt-4 mb-0">
+            Already registered? <a href="{% url 'accounts:login' %}">Log in</a>
+        </p>
+        <hr>
+        <p class="small muted mb-0 text-center">
+            Coordinator accounts are created by the internship office administrator.
+        </p>
+    </div>
+</div>
+{% endblock %}

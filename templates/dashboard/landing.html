@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}InternLink — Find your internship{% endblock %}
+{% block content %}
+<section class="hero mb-4">
+    <div class="row align-items-center position-relative" style="z-index: 1;">
+        <div class="col-lg-8">
+            <span class="badge badge-soft-warning mb-3">Internship placement portal</span>
+            <h1 class="display-5 mb-3">Find the right place to start your career.</h1>
+            <p class="lead mb-4">
+                Browse verified internship openings from companies and organizations, apply in a few clicks,
+                and track every step from shortlist to offer.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'opportunities:posting_list' %}" class="btn btn-light btn-lg">
+                    <i class="bi bi-search"></i> Browse internships
+                </a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-outline-light btn-lg">Create an account</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="row g-3 mb-5">
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <span class="stat-icon"><i class="bi bi-briefcase"></i></span>
+            <div>
+                <div class="stat-value">{{ posting_count }}</div>
+                <div class="stat-label">Open internships</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <span class="stat-icon"><i class="bi bi-building"></i></span>
+            <div>
+                <div class="stat-value">{{ company_count }}</div>
+                <div class="stat-label">Partner companies</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <span class="stat-icon"><i class="bi bi-mortarboard"></i></span>
+            <div>
+                <div class="stat-value">{{ student_count }}</div>
+                <div class="stat-label">Students registered</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="section-title mb-0">Featured opportunities</h2>
+    <a href="{% url 'opportunities:posting_list' %}" class="small">View all <i class="bi bi-arrow-right"></i></a>
+</div>
+<div class="row g-4">
+    {% for posting in postings %}
+    <div class="col-md-6 col-lg-4">
+        {% include 'partials/posting_card.html' %}
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p class="mb-2">No internships have been published yet.</p>
+                <p class="small">Check back soon — new opportunities are added regularly.</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row g-4 mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <span class="stat-icon mb-3"><i class="bi bi-person-plus"></i></span>
+                <h5>Create a student profile</h5>
+                <p class="muted small mb-0">Add your school, course, skills, and resume so employers know who you are.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <span class="stat-icon mb-3"><i class="bi bi-send"></i></span>
+                <h5>Apply and track progress</h5>
+                <p class="muted small mb-0">Follow your application from review to interview, offer, and acceptance.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <span class="stat-icon mb-3"><i class="bi bi-building-add"></i></span>
+                <h5>Hiring interns?</h5>
+                <p class="muted small mb-3">Post opportunities and manage applicants from one dashboard.</p>
+                <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-sm">Post an internship</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

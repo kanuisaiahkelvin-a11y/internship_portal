@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Coordinator dashboard — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Coordinator dashboard</h1>
+        <p class="muted mb-0">Oversee companies, postings, and student placements.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'opportunities:review_postings' %}" class="btn btn-primary">
+            <i class="bi bi-clipboard-check"></i> Review queue
+            {% if pending_count %}<span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>{% endif %}
+        </a>
+        <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-primary">Reports</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ pending_count }}</div>
+            <div class="stat-label">Postings to review</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ application_count }}</div>
+            <div class="stat-label">Total applications</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ placed_count }}</div>
+            <div class="stat-label">Students placed</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ unverified_companies }}</div>
+            <div class="stat-label">Unverified companies</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Postings awaiting review</strong>
+                <a href="{% url 'opportunities:review_postings' %}" class="small">Open queue</a>
+            </div>
+            {% if pending_postings %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Posting</th><th>Company</th><th>Submitted by</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for posting in pending_postings %}
+                        <tr>
+                            <td><a href="{% url 'opportunities:posting_detail' posting.pk %}" class="fw-semibold">{{ posting.title }}</a></td>
+                            <td>{{ posting.company.name }}</td>
+                            <td class="small muted">{{ posting.created_by.full_name }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{% url 'opportunities:posting_approve' posting.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-check2-circle"></i>
+                <p class="mb-0">The review queue is empty. Nice work!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Recent applications</strong>
+                <a href="{% url 'applications:review_list' %}" class="small">View all</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Student</th><th>Internship</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for application in recent_applications %}
+                        <tr>
+                            <td>{{ application.student.full_name }}</td>
+                            <td>
+                                <div>{{ application.posting.title }}</div>
+                                <div class="small muted">{{ application.posting.company.name }}</div>
+                            </td>
+                            <td><span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span></td>
+                            <td class="text-end">
+                                <a href="{% url 'applications:detail' application.pk %}" class="btn btn-sm btn-outline-primary">Open</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center muted py-4">No applications yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Application pipeline</strong></div>
+            <div class="card-body">
+                {% with counts=status_counts %}
+                <div class="mb-2 d-flex justify-content-between small"><span>Submitted</span><strong>{{ counts.submitted|default:0 }}</strong></div>
+                <div class="mb-2 d-flex justify-content-between small"><span>Under review</span><strong>{{ counts.under_review|default:0 }}</strong></div>
+                <div class="mb-2 d-flex justify-content-between small"><span>Shortlisted</span><strong>{{ counts.shortlisted|default:0 }}</strong></div>
+                <div class="mb-2 d-flex justify-content-between small"><span>Interview</span><strong>{{ counts.interview|default:0 }}</strong></div>
+                <div class="mb-2 d-flex justify-content-between small"><span>Offered</span><strong>{{ counts.offered|default:0 }}</strong></div>
+                <div class="mb-2 d-flex justify-content-between small"><span>Accepted</span><strong class="text-success">{{ counts.accepted|default:0 }}</strong></div>
+                <div class="mb-2 d-flex justify-content-between small"><span>Rejected</span><strong class="text-danger">{{ counts.rejected|default:0 }}</strong></div>
+                <div class="d-flex justify-content-between small"><span>Withdrawn</span><strong>{{ counts.withdrawn|default:0 }}</strong></div>
+                {% endwith %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Companies</strong>
+                <a href="{% url 'opportunities:company_list' %}" class="small">View all</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for company in company_rows %}
+                <a href="{% url 'opportunities:company_detail' company.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold">{{ company.name }}</div>
+                        <div class="small muted">{{ company.posting_total }} posting{{ company.posting_total|pluralize }} · {{ company.application_total }} applicant{{ company.application_total|pluralize }}</div>
+                    </div>
+                    {% if company.is_verified %}
+                    <i class="bi bi-patch-check-fill text-primary"></i>
+                    {% else %}
+                    <span class="badge badge-soft-warning">Unverified</span>
+                    {% endif %}
+                </a>
+                {% empty %}
+                <div class="list-group-item text-center muted py-4">No companies registered.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

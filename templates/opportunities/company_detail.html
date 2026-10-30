@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}{{ company.name }} — InternLink{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{% url 'opportunities:company_list' %}">Companies</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ company.name }}</li>
+    </ol>
+</nav>
+
+<div class="card mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div class="d-flex align-items-center gap-3">
+                {% if company.logo_url %}
+                <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-logo company-logo-lg">
+                {% else %}
+                <span class="company-logo company-logo-lg">{{ company.name|first|upper }}</span>
+                {% endif %}
+                <div>
+                    <h1 class="h3 mb-1">
+                        {{ company.name }}
+                        {% if company.is_verified %}
+                        <i class="bi bi-patch-check-fill text-primary" title="Verified company"></i>
+                        {% endif %}
+                    </h1>
+                    <div class="muted">
+                        {{ company.industry|default:"Company" }}
+                        · <i class="bi bi-geo-alt"></i> {{ company.location }}
+                    </div>
+                    <div class="mt-2">
+                        {% if company.is_verified %}
+                        <span class="badge badge-soft-success">Verified by internship office</span>
+                        {% else %}
+                        <span class="badge badge-soft-warning">Awaiting verification</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {% if company.website %}
+                <a href="{{ company.website }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-globe"></i> Website
+                </a>
+                {% endif %}
+                {% if can_manage %}
+                <a href="{% url 'opportunities:company_edit' company.pk %}" class="btn btn-outline-primary btn-sm">Edit company</a>
+                {% endif %}
+                {% if user.is_coordinator %}
+                <form method="post" action="{% url 'opportunities:company_verify' company.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm {% if company.is_verified %}btn-outline-danger{% else %}btn-success{% endif %}">
+                        {% if company.is_verified %}Remove verification{% else %}Verify company{% endif %}
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if company.description %}
+        <hr>
+        <p class="mb-0">{{ company.description|linebreaksbr }}</p>
+        {% endif %}
+
+        {% if company.contact_email or company.contact_phone %}
+        <hr>
+        <div class="d-flex flex-wrap gap-4 small">
+            {% if company.contact_email %}<span><i class="bi bi-envelope"></i> {{ company.contact_email }}</span>{% endif %}
+            {% if company.contact_phone %}<span><i class="bi bi-telephone"></i> {{ company.contact_phone }}</span>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="section-title h5 mb-0">Open internships</h2>
+    <span class="small muted">{{ postings|length }} posting{{ postings|length|pluralize }}</span>
+</div>
+<div class="row g-4">
+    {% for posting in postings %}
+    <div class="col-md-6 col-lg-4">{% include 'partials/posting_card.html' %}</div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card"><div class="empty-state">
+            <i class="bi bi-briefcase"></i>
+            <p class="mb-0">This company has no open internships right now.</p>
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

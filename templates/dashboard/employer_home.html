@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Employer dashboard — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ company.name|default:"Employer dashboard" }}</h1>
+        <p class="muted mb-0">
+            {% if company %}
+            {% if company.is_verified %}<span class="badge badge-soft-success"><i class="bi bi-patch-check-fill"></i> Verified company</span>{% else %}<span class="badge badge-soft-warning">Verification pending</span>{% endif %}
+            {% else %}
+            Set up your company profile to start posting internships.
+            {% endif %}
+        </p>
+    </div>
+    {% if company %}
+    <a href="{% url 'opportunities:posting_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New internship posting
+    </a>
+    {% else %}
+    <a href="{% url 'opportunities:company_create' %}" class="btn btn-primary">Create company profile</a>
+    {% endif %}
+</div>
+
+{% if not company %}
+<div class="card">
+    <div class="empty-state">
+        <i class="bi bi-building-add"></i>
+        <h5>No company linked yet</h5>
+        <p>Create a company profile so coordinators can verify you and students can learn about your organization.</p>
+        <a href="{% url 'opportunities:company_create' %}" class="btn btn-primary">Create company profile</a>
+    </div>
+</div>
+{% else %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ posting_count }}</div>
+            <div class="stat-label">Total postings</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ published_count }}</div>
+            <div class="stat-label">Live postings</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ new_application_count }}</div>
+            <div class="stat-label">New applications</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ shortlisted_count }}</div>
+            <div class="stat-label">Shortlisted / interview</div>
+        </div>
+    </div>
+</div>
+
+{% if pending_count %}
+<div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span><i class="bi bi-hourglass-split"></i> {{ pending_count }} posting{{ pending_count|pluralize }} waiting for coordinator review.</span>
+    <a href="{% url 'opportunities:my_postings' %}" class="btn btn-sm btn-outline-primary">Manage postings</a>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Recent applications</strong>
+                <a href="{% url 'applications:review_list' %}" class="small">Review all</a>
+            </div>
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Student</th><th>Internship</th><th>Status</th><th>Applied</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ application.student.full_name }}</div>
+                                <div class="small muted">{{ application.student.email }}</div>
+                            </td>
+                            <td>{{ application.posting.title }}</td>
+                            <td><span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span></td>
+                            <td class="small muted">{{ application.created_at|date:"M j" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'applications:detail' application.pk %}" class="btn btn-sm btn-outline-primary">Open</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p class="mb-2">No applications yet.</p>
+                <a href="{% url 'opportunities:posting_create' %}" class="btn btn-primary btn-sm">Post an internship</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Your postings</strong>
+                <a href="{% url 'opportunities:my_postings' %}" class="small">Manage</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for posting in postings %}
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                    <div>
+                        <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="fw-semibold">{{ posting.title }}</a>
+                        <div class="small muted">{{ posting.application_count }} application{{ posting.application_count|pluralize }} · {{ posting.get_work_mode_display }}</div>
+                    </div>
+                    <span class="badge bg-{% if posting.status == 'published' %}success{% elif posting.status == 'pending' %}info{% elif posting.status == 'draft' %}secondary{% else %}dark{% endif %}">
+                        {{ posting.get_status_display }}
+                    </span>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-center muted py-4">No postings yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Upcoming interviews</strong></div>
+            <div class="card-body">
+                {% for interview in upcoming_interviews %}
+                <div class="d-flex gap-2 mb-3">
+                    <span class="stat-icon"><i class="bi bi-calendar-event"></i></span>
+                    <div>
+                        <a href="{% url 'applications:detail' interview.application.pk %}" class="fw-semibold small">
+                            {{ interview.application.student.full_name }}
+                        </a>
+                        <div class="small muted">{{ interview.application.posting.title }}</div>
+                        <div class="small muted">{{ interview.scheduled_at|date:"M j, Y g:i A" }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="small muted mb-0">No interviews scheduled.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Company</strong></div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if company.logo_url %}
+                    <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-logo company-logo-lg">
+                    {% else %}
+                    <span class="company-logo company-logo-lg">{{ company.name|first|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">{{ company.name }}</div>
+                        <div class="small muted">{{ company.industry|default:"—" }}</div>
+                        <div class="small muted"><i class="bi bi-geo-alt"></i> {{ company.location }}</div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'opportunities:company_detail' company.pk %}" class="btn btn-outline-primary btn-sm">View public page</a>
+                    <a href="{% url 'opportunities:company_edit' company.pk %}" class="btn btn-outline-secondary btn-sm">Edit company profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

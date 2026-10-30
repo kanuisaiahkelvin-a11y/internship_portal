@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Application — {{ application.posting.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        {% if user.is_student %}
+        <li class="breadcrumb-item"><a href="{% url 'applications:my_applications' %}">My applications</a></li>
+        {% else %}
+        <li class="breadcrumb-item"><a href="{% url 'applications:review_list' %}">Applications</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">Application #{{ application.pk }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div>
+        <h1 class="mb-1">
+            {% if can_manage %}{{ application.student.full_name }}{% else %}{{ application.posting.title }}{% endif %}
+        </h1>
+        <p class="muted mb-0">
+            {% if can_manage %}
+            {{ application.student.email }} · applied for
+            <a href="{% url 'opportunities:posting_detail' application.posting.pk %}">{{ application.posting.title }}</a>
+            {% else %}
+            {{ application.posting.company.name }} · {{ application.posting.location }}
+            {% endif %}
+            · <span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span>
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if is_owner and application.can_withdraw %}
+        <form method="post" action="{% url 'applications:withdraw' application.pk %}"
+              onsubmit="return confirm('Withdraw this application?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Withdraw application</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'opportunities:posting_detail' application.posting.pk %}" class="btn btn-outline-secondary">View internship</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        {% if application.status == 'offered' and is_owner %}
+        <div class="card border-success mb-4">
+            <div class="card-body">
+                <h5 class="text-success"><i class="bi bi-award"></i> You received an offer!</h5>
+                {% if offer %}
+                <p class="mb-2">
+                    Start date: <strong>{{ offer.start_date|date:"F j, Y" }}</strong>
+                    {% if offer.end_date %} · End date: <strong>{{ offer.end_date|date:"F j, Y" }}</strong>{% endif %}
+                    {% if offer.stipend %} · Stipend: <strong>{{ offer.stipend|floatformat:0 }}</strong>{% endif %}
+                </p>
+                {% if offer.details %}<p class="small muted">{{ offer.details|linebreaksbr }}</p>{% endif %}
+                {% if offer.response_deadline %}<p class="small text-danger mb-2">Respond by {{ offer.response_deadline|date:"F j, Y" }}.</p>{% endif %}
+                {% endif %}
+                <form method="post" action="{% url 'applications:respond_offer' application.pk %}" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" name="decision" value="accept" class="btn btn-success">Accept offer</button>
+                    <button type="submit" name="decision" value="decline" class="btn btn-outline-danger">Decline offer</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Cover letter</strong></div>
+            <div class="card-body">
+                {% if application.cover_letter %}
+                <p class="mb-0">{{ application.cover_letter|linebreaksbr }}</p>
+                {% else %}
+                <p class="muted mb-0">No cover letter provided.</p>
+                {% endif %}
+                <hr>
+                <a href="{{ application.resume.url }}" target="_blank" class="fw-semibold">
+                    <i class="bi bi-file-earmark-pdf"></i> Download submitted resume
+                </a>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Application timeline</strong></div>
+            <div class="card-body">
+                <ul class="timeline">
+                    {% for entry in history %}
+                    <li>
+                        <div class="d-flex justify-content-between flex-wrap gap-1">
+                            <strong>{{ entry.get_to_status_display }}</strong>
+                            <span class="small muted">{{ entry.created_at|date:"M j, Y g:i A" }}</span>
+                        </div>
+                        <div class="small muted">
+                            {% if entry.changed_by %}by {{ entry.changed_by.full_name }}{% else %}by system{% endif %}
+                        </div>
+                        {% if entry.note %}<div class="small mt-1">{{ entry.note }}</div>{% endif %}
+                    </li>
+                    {% empty %}
+                    <li>Application submitted.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Interviews</strong>
+                {% if can_manage %}
+                <a href="{% url 'applications:schedule_interview' application.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-calendar-plus"></i> Schedule interview
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% for interview in interviews %}
+                <div class="d-flex justify-content-between align-items-start gap-3 {% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
+                    <div>
+                        <div class="fw-semibold">{{ interview.scheduled_at|date:"F j, Y g:i A" }}</div>
+                        <div class="small muted">
+                            {{ interview.get_mode_display }}
+                            {% if interview.location %} · {{ interview.location }}{% endif %}
+                        </div>
+                        {% if interview.notes %}<div class="small mt-1">{{ interview.notes }}</div>{% endif %}
+                    </div>
+                    <span class="badge bg-{% if interview.status == 'scheduled' %}info{% elif interview.status == 'completed' %}success{% elif interview.status == 'no_show' %}danger{% else %}secondary{% endif %}">
+                        {{ interview.get_status_display }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="muted mb-0">No interviews scheduled.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if offer %}
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Offer details</strong>
+                {% if can_manage %}
+                <a href="{% url 'applications:extend_offer' application.pk %}" class="btn btn-sm btn-outline-primary">Edit offer</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4"><div class="small muted">Start date</div><div class="fw-semibold">{{ offer.start_date|date:"M j, Y" }}</div></div>
+                    <div class="col-md-4"><div class="small muted">End date</div><div class="fw-semibold">{{ offer.end_date|date:"M j, Y"|default:"—" }}</div></div>
+                    <div class="col-md-4"><div class="small muted">Stipend</div><div class="fw-semibold">{% if offer.stipend %}{{ offer.stipend|floatformat:0 }}{% else %}Unpaid{% endif %}</div></div>
+                    <div class="col-md-4"><div class="small muted">Response deadline</div><div class="fw-semibold">{{ offer.response_deadline|date:"M j, Y"|default:"—" }}</div></div>
+                    <div class="col-md-4"><div class="small muted">Offered by</div><div class="fw-semibold">{{ offer.offered_by.full_name|default:"—" }}</div></div>
+                    <div class="col-md-4"><div class="small muted">Responded</div><div class="fw-semibold">{{ offer.responded_at|date:"M j, Y g:i A"|default:"Pending" }}</div></div>
+                </div>
+                {% if offer.details %}<hr><p class="mb-0">{{ offer.details|linebreaksbr }}</p>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Notes &amp; messages</strong></div>
+            <div class="card-body">
+                {% for note in notes %}
+                <div class="{% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong class="small">{{ note.author.full_name }}</strong>
+                        <span class="small muted">{{ note.created_at|date:"M j, Y g:i A" }}</span>
+                    </div>
+                    <p class="mb-1 small">{{ note.content|linebreaksbr }}</p>
+                    {% if note.is_internal %}<span class="badge badge-soft-warning">Internal note</span>{% endif %}
+                </div>
+                {% empty %}
+                <p class="muted mb-3">No notes yet.</p>
+                {% endfor %}
+
+                <hr>
+                <form method="post" action="{% url 'applications:add_note' application.pk %}">
+                    {% csrf_token %}
+                    <label class="form-label small" for="note-content">Add a note or message</label>
+                    <textarea id="note-content" name="content" class="form-control mb-2" rows="3" required></textarea>
+                    {% if can_manage %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_internal" id="is_internal" checked>
+                        <label class="form-check-label small" for="is_internal">
+                            Internal note (hidden from the student)
+                        </label>
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Post note</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if can_manage %}
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Move application</strong></div>
+            <div class="card-body">
+                {% if status_form.fields.new_status.choices %}
+                <form method="post" action="{% url 'applications:update_status' application.pk %}">
+                    {% csrf_token %}
+                    <label class="form-label small" for="new_status">Next status</label>
+                    <select name="new_status" id="new_status" class="form-select mb-2">
+                        {% for value, label in status_form.fields.new_status.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <textarea name="note" class="form-control mb-2" rows="2" placeholder="Optional note for the student"></textarea>
+                    <button type="submit" class="btn btn-primary w-100">Update status</button>
+                </form>
+                {% else %}
+                <p class="small muted mb-0">This application is in a final state and cannot move further.</p>
+                {% endif %}
+                <hr>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'applications:schedule_interview' application.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-calendar-plus"></i> Schedule interview
+                    </a>
+                    <a href="{% url 'applications:extend_offer' application.pk %}" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-award"></i> {% if offer %}Edit offer{% else %}Extend offer{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Internship</strong></div>
+            <div class="card-body">
+                <a href="{% url 'opportunities:posting_detail' application.posting.pk %}" class="fw-bold text-dark">
+                    {{ application.posting.title }}
+                </a>
+                <div class="small muted mb-2">{{ application.posting.company.name }}</div>
+                <div class="small mb-1"><i class="bi bi-geo-alt"></i> {{ application.posting.location }}</div>
+                <div class="small mb-1"><i class="bi bi-laptop"></i> {{ application.posting.get_work_mode_display }}</div>
+                <div class="small mb-1"><i class="bi bi-clock"></i> {{ application.posting.duration_weeks }} weeks</div>
+                <div class="small mb-0"><i class="bi bi-cash"></i> {% if application.posting.stipend %}{{ application.posting.stipend|floatformat:0 }} / month{% else %}Unpaid{% endif %}</div>
+            </div>
+        </div>
+
+        {% if can_manage %}
+        {% with profile=application.student.student_profile %}
+        <div class="card">
+            <div class="card-header bg-white"><strong>Applicant profile</strong></div>
+            <div class="card-body">
+                <div class="fw-bold">{{ application.student.full_name }}</div>
+                <div class="small muted mb-3">{{ application.student.email }}</div>
+                {% if profile %}
+                <div class="small mb-1"><strong>School:</strong> {{ profile.school|default:"—" }}</div>
+                <div class="small mb-1"><strong>Course:</strong> {{ profile.course|default:"—" }}</div>
+                <div class="small mb-1"><strong>Year:</strong> {{ profile.get_year_level_display|default:"—" }}</div>
+                {% if profile.location %}<div class="small mb-1"><strong>Location:</strong> {{ profile.location }}</div>{% endif %}
+                {% if profile.skill_list %}
+                <div class="mt-2">
+                    {% for skill in profile.skill_list %}<span class="skill-chip">{{ skill }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                {% if profile.resume %}
+                <div class="mt-2"><a href="{{ profile.resume.url }}" target="_blank" class="small"><i class="bi bi-file-earmark-pdf"></i> Profile resume</a></div>
+                {% endif %}
+                {% if profile.bio %}<hr><p class="small mb-0">{{ profile.bio|linebreaksbr }}</p>{% endif %}
+                {% endif %}
+                {% if user.is_coordinator %}
+                <hr>
+                <a href="{% url 'accounts:profile_detail' application.student.pk %}" class="btn btn-outline-secondary btn-sm w-100">View full profile</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

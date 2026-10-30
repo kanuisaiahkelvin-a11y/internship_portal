@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Saved internships — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Saved internships</h1>
+        <p class="muted mb-0">Keep track of opportunities you want to revisit.</p>
+    </div>
+    <a href="{% url 'opportunities:posting_list' %}" class="btn btn-outline-primary">Browse more</a>
+</div>
+
+<div class="row g-4">
+    {% for bookmark in bookmarks %}
+    <div class="col-md-6 col-lg-4">
+        <div class="d-flex flex-column h-100">
+            {% include 'partials/posting_card.html' with posting=bookmark.posting %}
+            <form method="post" action="{% url 'opportunities:bookmark_toggle' bookmark.posting.pk %}" class="mt-2">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-bookmark-x"></i> Remove from saved
+                </button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card"><div class="empty-state">
+            <i class="bi bi-bookmark"></i>
+            <h5>No saved internships yet</h5>
+            <p class="mb-3">Tap the bookmark button on any internship to save it here.</p>
+            <a href="{% url 'opportunities:posting_list' %}" class="btn btn-primary btn-sm">Browse internships</a>
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}

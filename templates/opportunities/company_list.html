@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Companies — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Partner companies</h1>
+        <p class="muted mb-0">Organizations offering internship placements.</p>
+    </div>
+    {% if user.is_authenticated and user.is_employer and not user.employer_profile.company_id %}
+    <a href="{% url 'opportunities:company_create' %}" class="btn btn-primary">Create company profile</a>
+    {% endif %}
+</div>
+
+<form method="get" class="filter-bar mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-9">
+            <label class="form-label small mb-1" for="q">Search companies</label>
+            <input type="search" class="form-control" id="q" name="q" value="{{ request.GET.q }}" placeholder="Company name, industry, or location">
+        </div>
+        <div class="col-md-3 d-grid">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+        </div>
+    </div>
+</form>
+
+<div class="row g-4">
+    {% for company in companies %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card card-hover h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    {% if company.logo_url %}
+                    <img src="{{ company.logo_url }}" alt="{{ company.name }}" class="company-logo">
+                    {% else %}
+                    <span class="company-logo">{{ company.name|first|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <a href="{% url 'opportunities:company_detail' company.pk %}" class="fw-bold text-dark">{{ company.name }}</a>
+                        {% if company.is_verified %}<i class="bi bi-patch-check-fill text-primary" title="Verified"></i>{% endif %}
+                        <div class="small muted">{{ company.industry|default:"Company" }}</div>
+                    </div>
+                </div>
+                <p class="small muted mb-3">{{ company.description|truncatewords:16|default:"No description provided yet." }}</p>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="small muted"><i class="bi bi-geo-alt"></i> {{ company.location }}</span>
+                    <span class="badge badge-soft">{{ company.open_postings }} open</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card"><div class="empty-state">
+            <i class="bi bi-building"></i>
+            <p class="mb-0">No companies match your search.</p>
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}

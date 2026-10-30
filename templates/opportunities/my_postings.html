@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}My postings — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>My postings</h1>
+        <p class="muted mb-0">
+            {% if company %}{{ company.name }} · {{ posting_count }} posting{{ posting_count|pluralize }}{% else %}No company linked yet{% endif %}
+        </p>
+    </div>
+    {% if company %}
+    <a href="{% url 'opportunities:posting_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New posting</a>
+    {% endif %}
+</div>
+
+{% if not company %}
+<div class="card"><div class="empty-state">
+    <i class="bi bi-building-add"></i>
+    <h5>Create a company profile first</h5>
+    <p>You need a company profile before you can post internships.</p>
+    <a href="{% url 'opportunities:company_create' %}" class="btn btn-primary">Create company profile</a>
+</div></div>
+{% else %}
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if not request.GET.status %}active{% endif %}" href="{% url 'opportunities:my_postings' %}">
+            All <span class="badge bg-light text-dark">{{ counts.all }}</span>
+        </a>
+    </li>
+    {% for tab in status_tabs %}
+    <li class="nav-item">
+        <a class="nav-link {% if request.GET.status == tab.value %}active{% endif %}" href="{% url 'opportunities:my_postings' %}?status={{ tab.value }}">
+            {{ tab.label }} <span class="badge bg-light text-dark">{{ tab.count }}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Posting</th>
+                    <th>Status</th>
+                    <th class="text-center">Applicants</th>
+                    <th>Deadline</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for posting in postings %}
+                <tr>
+                    <td>
+                        <a href="{% url 'opportunities:posting_detail' posting.pk %}" class="fw-semibold">{{ posting.title }}</a>
+                        <div class="small muted">{{ posting.get_work_mode_display }} · {{ posting.location }} · {{ posting.slots }} slot{{ posting.slots|pluralize }}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if posting.status == 'published' %}success{% elif posting.status == 'pending' %}info{% elif posting.status == 'draft' %}secondary{% else %}dark{% endif %}">
+                            {{ posting.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'applications:review_list' %}?posting={{ posting.pk }}">{{ posting.application_count }}</a>
+                    </td>
+                    <td class="small {% if posting.is_deadline_soon %}text-danger fw-semibold{% endif %}">
+                        {{ posting.application_deadline|date:"M j, Y" }}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{% url 'opportunities:posting_edit' posting.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            {% if posting.status == 'draft' %}
+                            <form method="post" action="{% url 'opportunities:posting_submit' posting.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Submit</button>
+                            </form>
+                            {% endif %}
+                            {% if posting.status == 'published' or posting.status == 'pending' %}
+                            <form method="post" action="{% url 'opportunities:posting_close' posting.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Close</button>
+                            </form>
+                            {% endif %}
+                            {% if posting.status == 'draft' or posting.status == 'closed' %}
+                            <a href="{% url 'opportunities:posting_delete' posting.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center muted py-5">
+                    No postings in this view. <a href="{% url 'opportunities:posting_create' %}">Create one</a>.
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

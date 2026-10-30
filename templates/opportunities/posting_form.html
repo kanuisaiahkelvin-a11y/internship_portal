@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}{{ page_title }} — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ page_title }}</h1>
+        <p class="muted mb-0">Postings are reviewed by a coordinator before they go live to students.</p>
+    </div>
+    <a href="{% url 'opportunities:my_postings' %}" class="btn btn-outline-secondary">Back to postings</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">Save draft</button>
+                        <a href="{% url 'opportunities:my_postings' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white"><strong>Posting tips</strong></div>
+            <div class="card-body small muted">
+                <p><strong>Be specific.</strong> Describe the day-to-day work and the skills a student will practice.</p>
+                <p><strong>Set realistic requirements.</strong> Focus on what a student can learn rather than years of experience.</p>
+                <p><strong>Keep deadlines current.</strong> Students can only apply until the deadline and while slots remain.</p>
+                <p class="mb-0"><strong>Review process.</strong> After saving a draft, submit it for coordinator review. Once approved, it is published immediately.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

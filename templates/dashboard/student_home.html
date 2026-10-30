@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Dashboard — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Welcome back, {{ user.first_name|default:user.email }} 👋</h1>
+        <p class="muted mb-0">Here is what is happening with your internship search.</p>
+    </div>
+    <a href="{% url 'opportunities:posting_list' %}" class="btn btn-primary">
+        <i class="bi bi-search"></i> Find internships
+    </a>
+</div>
+
+{% if profile and not profile.is_complete %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span><i class="bi bi-exclamation-triangle"></i> Your student profile is incomplete. Add your school, course, and resume to stand out.</span>
+    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-sm btn-dark">Complete profile</a>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ application_count }}</div>
+            <div class="stat-label">Applications</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ active_count }}</div>
+            <div class="stat-label">Active</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ offer_count }}</div>
+            <div class="stat-label">Offers</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ accepted_count }}</div>
+            <div class="stat-label">Accepted</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Recent applications</strong>
+                <a href="{% url 'applications:my_applications' %}" class="small">View all</a>
+            </div>
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Internship</th><th>Company</th><th>Status</th><th>Applied</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'applications:detail' application.pk %}" class="fw-semibold">
+                                    {{ application.posting.title }}
+                                </a>
+                            </td>
+                            <td>{{ application.posting.company.name }}</td>
+                            <td><span class="badge bg-{{ application.status_color }}">{{ application.get_status_display }}</span></td>
+                            <td class="small muted">{{ application.created_at|date:"M j, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-file-earmark-text"></i>
+                <p class="mb-2">You have not applied for an internship yet.</p>
+                <a href="{% url 'opportunities:posting_list' %}" class="btn btn-primary btn-sm">Browse internships</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="section-title h5 mb-0">Recommended for you</h2>
+            <span class="small muted">{{ saved_count }} saved</span>
+        </div>
+        <div class="row g-3">
+            {% for posting in recommended %}
+            <div class="col-md-6">
+                {% include 'partials/posting_card.html' %}
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card"><div class="empty-state">
+                    <i class="bi bi-stars"></i>
+                    <p class="mb-0">No new recommendations right now. Check the full list.</p>
+                </div></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Upcoming interviews</strong></div>
+            <div class="card-body">
+                {% for interview in upcoming_interviews %}
+                <div class="d-flex gap-2 mb-3">
+                    <span class="stat-icon"><i class="bi bi-calendar-event"></i></span>
+                    <div>
+                        <a href="{% url 'applications:detail' interview.application.pk %}" class="fw-semibold small">
+                            {{ interview.application.posting.title }}
+                        </a>
+                        <div class="small muted">{{ interview.scheduled_at|date:"M j, Y g:i A" }}</div>
+                        <div class="small muted">{{ interview.get_mode_display }}{% if interview.location %} · {{ interview.location }}{% endif %}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="small muted mb-0">No interviews scheduled yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Quick links</strong></div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'opportunities:bookmark_list' %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-bookmark"></i> Saved internships
+                </a>
+                <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-person"></i> My profile
+                </a>
+                <a href="{% url 'applications:my_applications' %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-file-earmark-text"></i> All applications
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

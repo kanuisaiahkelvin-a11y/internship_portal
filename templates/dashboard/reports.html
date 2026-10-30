@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Reports — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Placement reports</h1>
+        <p class="muted mb-0">A snapshot of internship activity across the portal.</p>
+    </div>
+    <a href="{% url 'dashboard:home' %}" class="btn btn-outline-secondary">Back to dashboard</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_applications }}</div>
+            <div class="stat-label">Applications</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ accepted_count }}</div>
+            <div class="stat-label">Offers accepted</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ placed_students }}</div>
+            <div class="stat-label">Students placed</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ placement_rate }}%</div>
+            <div class="stat-label">Acceptance rate</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Applications by status</strong></div>
+            <div class="card-body">
+                {% for row in status_counts %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ row.label }}</span>
+                        <strong>{{ row.total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-{% if row.status == 'accepted' %}success{% elif row.status == 'rejected' %}danger{% elif row.status == 'withdrawn' %}dark{% elif row.status == 'interview' %}warning{% else %}primary{% endif %}"
+                             role="progressbar"
+                             style="width: {% if total_applications %}{% widthratio row.total total_applications 100 %}{% else %}0{% endif %}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Postings by status</strong></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2"><span>Draft</span><strong>{{ posting_counts.draft|default:0 }}</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Pending review</span><strong>{{ posting_counts.pending|default:0 }}</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Published</span><strong>{{ posting_counts.published|default:0 }}</strong></div>
+                <div class="d-flex justify-content-between"><span>Closed</span><strong>{{ posting_counts.closed|default:0 }}</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-header bg-white"><strong>Company performance</strong></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Company</th><th class="text-center">Postings</th><th class="text-center">Applications</th><th class="text-center">Accepted</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for company in company_rows %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ company.name }}</div>
+                                <div class="small muted">{{ company.location }}</div>
+                            </td>
+                            <td class="text-center">{{ company.posting_total }}</td>
+                            <td class="text-center">{{ company.application_total }}</td>
+                            <td class="text-center">{{ company.accepted_total }}</td>
+                            <td class="text-end">
+                                {% if company.is_verified %}
+                                <span class="badge badge-soft-success">Verified</span>
+                                {% else %}
+                                <span class="badge badge-soft-warning">Unverified</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center muted py-4">No companies yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white"><strong>Most applied postings</strong></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Posting</th><th>Company</th><th class="text-center">Applications</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for posting in top_postings %}
+                        <tr>
+                            <td><a href="{% url 'opportunities:posting_detail' posting.pk %}">{{ posting.title }}</a></td>
+                            <td>{{ posting.company.name }}</td>
+                            <td class="text-center">{{ posting.application_total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center muted py-4">No postings yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if monthly %}
+<div class="card mt-4">
+    <div class="card-header bg-white"><strong>Applications over time</strong></div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead class="table-light"><tr><th>Month</th><th class="text-center">Applications</th></tr></thead>
+            <tbody>
+                {% for row in monthly %}
+                <tr><td>{{ row.month|date:"F Y" }}</td><td class="text-center">{{ row.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

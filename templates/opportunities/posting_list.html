@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Find internships — InternLink{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Find your internship</h1>
+        <p class="muted mb-0">{{ total_count }} opportunit{{ total_count|pluralize:"y,ies" }} matching your search</p>
+    </div>
+    {% if user.is_authenticated and user.is_employer %}
+    <a href="{% url 'opportunities:posting_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Post an internship
+    </a>
+    {% endif %}
+</div>
+
+<form method="get" class="filter-bar mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-lg-4">
+            <label class="form-label small mb-1" for="q">Search</label>
+            <input type="search" class="form-control" id="q" name="q" value="{{ request.GET.q }}" placeholder="Title, company, skill, or location">
+        </div>
+        <div class="col-6 col-lg-2">
+            <label class="form-label small mb-1" for="work_mode">Work mode</label>
+            <select class="form-select" id="work_mode" name="work_mode">
+                <option value="">Any</option>
+                {% for value, label in filter_form.fields.work_mode.choices %}
+                {% if value %}
+                <option value="{{ value }}" {% if request.GET.work_mode == value %}selected{% endif %}>{{ label }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-lg-3">
+            <label class="form-label small mb-1" for="company">Company</label>
+            <select class="form-select" id="company" name="company">
+                <option value="">All companies</option>
+                {% for company in companies %}
+                <option value="{{ company.pk }}" {% if request.GET.company == company.pk|stringformat:"s" %}selected{% endif %}>{{ company.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-lg-2">
+            <label class="form-label small mb-1" for="sort">Sort by</label>
+            <select class="form-select" id="sort" name="sort">
+                <option value="newest" {% if request.GET.sort != 'deadline' and request.GET.sort != 'stipend' %}selected{% endif %}>Newest</option>
+                <option value="deadline" {% if request.GET.sort == 'deadline' %}selected{% endif %}>Deadline</option>
+                <option value="stipend" {% if request.GET.sort == 'stipend' %}selected{% endif %}>Stipend</option>
+            </select>
+        </div>
+        <div class="col-6 col-lg-1 d-grid">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        </div>
+    </div>
+</form>
+
+<div class="row g-4">
+    {% for posting in postings %}
+    <div class="col-md-6 col-lg-4">
+        {% include 'partials/posting_card.html' %}
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="empty-state">
+                <i class="bi bi-search"></i>
+                <h5>No internships match your filters</h5>
+                <p class="mb-3">Try a broader search or clear the filters.</p>
+                <a href="{% url 'opportunities:posting_list' %}" class="btn btn-outline-primary btn-sm">Clear filters</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/pagination.html' %}
+{% endblock %}
