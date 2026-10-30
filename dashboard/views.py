@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from accounts.mixins import CoordinatorRequiredMixin
-from accounts.models import User
+from accounts.models import CoordinatorRequest, User
 from applications.models import Application, Interview
 from opportunities.models import Company, InternshipPosting
 from django.views.generic import TemplateView
@@ -164,6 +164,16 @@ def home(request):
             'pending_count': InternshipPosting.objects.filter(
                 status=InternshipPosting.Status.PENDING
             ).count(),
+            'coordinator_requests': CoordinatorRequest.objects.filter(
+                status=CoordinatorRequest.Status.PENDING
+            )[:8],
+            'coordinator_request_count': CoordinatorRequest.objects.filter(
+                status=CoordinatorRequest.Status.PENDING
+            ).count(),
+            'approved_requests': CoordinatorRequest.objects.filter(
+                status=CoordinatorRequest.Status.APPROVED,
+                invite_token__isnull=False,
+            )[:5],
             'unverified_companies': Company.objects.filter(is_verified=False).count(),
             'application_count': applications.count(),
             'status_counts': status_counts,

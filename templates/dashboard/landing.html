@@ -133,15 +133,21 @@
                         <li>Follow each student through the pipeline</li>
                         <li>Export placement reports and rates</li>
                     </ul>
-                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm mt-auto">
-                        Coordinator sign in
-                    </a>
+                    <div class="d-grid gap-2 mt-auto">
+                        <a href="{% url 'accounts:coordinator_request' %}" class="btn btn-primary btn-sm">
+                            Request coordinator access
+                        </a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm">
+                            Coordinator sign in
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <p class="text-center small muted mt-3 mb-0">
-        Coordinator accounts are created by the internship office administrator.
+        University access requests are reviewed by the internship office before
+        an account is created.
     </p>
 </section>
 {% endblock %}

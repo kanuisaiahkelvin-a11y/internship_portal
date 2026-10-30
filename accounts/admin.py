@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import EmployerProfile, StudentProfile, User
+from .models import CoordinatorRequest, EmployerProfile, StudentProfile, User
 
 
 @admin.register(User)
@@ -34,3 +34,11 @@ class StudentProfileAdmin(admin.ModelAdmin):
 class EmployerProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'company', 'job_title')
     search_fields = ('user__email', 'company__name')
+
+
+@admin.register(CoordinatorRequest)
+class CoordinatorRequestAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'institution', 'email', 'status', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('full_name', 'institution', 'email')
+    readonly_fields = ('invite_token', 'user', 'reviewed_by', 'reviewed_at', 'created_at')

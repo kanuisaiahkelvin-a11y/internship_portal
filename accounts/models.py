@@ -130,3 +130,60 @@ class EmployerProfile(models.Model):
 
     def __str__(self):
         return f'Employer profile: {self.user.full_name}'
+
+
+class CoordinatorRequest(models.Model):
+    """An access request from a university or internship office.
+
+    Coordinator accounts cannot self-register: the office submits a request and
+    an existing coordinator approves it, which creates the account and hands
+    back a one-time link for setting a password.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending review'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
+
+    full_name = models.CharField(max_length=150)
+    institution = models.CharField(max_length=200)
+    email = models.EmailField()
+    message = models.TextField(
+        blank=True,
+        help_text='Optional: your role at the institution and how you will use the portal.',
+    )
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
+    invite_token = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='coordinator_request',
+    )
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_coordinator_requests',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'coordinator access request'
+
+    def __str__(self):
+        return f'{self.institution} — {self.full_name}'
+
+    @property
+    def is_pending(self):
+        return self.status == self.Status.PENDING
+
+    @property
+    def can_use_invite(self):
+        return bool(self.invite_token and self.status == self.Status.APPROVED)

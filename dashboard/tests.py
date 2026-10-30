@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from accounts.models import User
+from accounts.models import CoordinatorRequest, User
 
 
 class DashboardTests(TestCase):
@@ -32,6 +32,18 @@ class DashboardTests(TestCase):
         self.assertContains(response, 'University / admin portal')
         self.assertContains(response, 'Post internships and manage applicants')
         self.assertContains(response, 'Monitor students and placements')
+
+    def test_coordinator_dashboard_lists_access_requests(self):
+        CoordinatorRequest.objects.create(
+            full_name='Ada Cruz',
+            institution='State University',
+            email='ada@state.edu',
+        )
+        self.client.force_login(self.coordinator)
+        response = self.client.get(reverse('dashboard:home'))
+        self.assertContains(response, 'Coordinator access requests')
+        self.assertContains(response, 'State University')
+        self.assertContains(response, 'Approve')
 
     def test_each_role_dashboard_renders(self):
         for user in (self.student, self.employer, self.coordinator):

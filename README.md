@@ -32,6 +32,7 @@ This project is independent of the existing `hrmo_tracker` project and has its o
 ### Internship Coordinator
 - Review the posting queue and approve, reject, or publish submissions.
 - Verify companies.
+- Approve or reject university access requests and send invite links.
 - Access all postings, applications, companies, and reports.
 - Oversee pipeline activity across every employer.
 - Use the Django admin for full data administration.
@@ -195,6 +196,29 @@ internship_portal/
 - **Employers** can only manage their own company, postings, and applications for those postings.
 - **Coordinators** have read/write oversight of all companies, postings, applications, and reports.
 - Object-level checks are implemented in views and query scoping, not only in templates.
+
+## Coordinator access requests
+
+Coordinator accounts are never self-registered. The flow is:
+
+```
+university submits request ──► coordinator approves ──► invite link ──► password set ──► signed in
+                            └► coordinator rejects
+```
+
+1. The university opens `/accounts/coordinator/request/` (linked from the landing
+   page and the sign-up page) and submits name, institution, email, and an
+   optional note.
+2. Every coordinator gets an in-app notification. Pending requests appear in a
+   **Coordinator access requests** card on the coordinator dashboard.
+3. Approving creates the coordinator account with an unusable password, generates
+   a one-time invite link, and emails it. The link is also shown on the dashboard
+   so it can be copied and sent directly.
+4. The invitee opens the link, sets a password, and is signed in automatically.
+   The link stops working after one use.
+
+Email uses Django's console backend by default, so the message is printed to the
+server log. Configure `EMAIL_BACKEND` with real SMTP credentials to deliver it.
 
 ## File uploads
 
