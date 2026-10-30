@@ -148,3 +148,76 @@ class CsrfProtectionTests(TestCase):
         response = client.post(reverse('diagnostics'), {'csrfmiddlewaretoken': token})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'was accepted')
+
+
+class WebViewCsrfTests(TestCase):
+    """Installed apps and in-app browsers send odd Origin/Referer headers.
+
+    The request must still succeed when the CSRF token is valid, and must still
+    be rejected when it is missing or comes from another site.
+    """
+
+    def _client(self):
+        return Client(enforce_csrf_checks=True)
+
+    # Production is HTTPS, where Django's Origin/Referer checks are enforced.
+    HTTPS = {'wsgi.url_scheme': 'https'}
+
+    def _post(self, client, token, **extra):
+        return client.post(
+            reverse('accounts:login'),
+            {
+                'csrfmiddlewaretoken': token,
+                'username': 'nobody@example.com',
+                'password': 'wrong-password',
+            },
+            **self.HTTPS,
+            **extra,
+        )
+
+    def _token(self, client):
+        page = client.get(reverse('accounts:login'), **self.HTTPS)
+        return page.cookies['csrftoken'].value
+
+    def test_null_origin_is_accepted_with_a_valid_token(self):
+        client = self._client()
+        response = self._post(
+            client,
+            self._token(client),
+            HTTP_ORIGIN='null',
+            HTTP_REFERER='https://testserver/accounts/login/',
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_missing_origin_and_referer_are_accepted_with_a_valid_token(self):
+        client = self._client()
+        response = self._post(client, self._token(client))
+        self.assertEqual(response.status_code, 200)
+
+    def test_foreign_origin_is_still_rejected(self):
+        client = self._client()
+        response = self._post(
+            client,
+            self._token(client),
+            HTTP_ORIGIN='https://evil.example',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_foreign_referer_is_still_rejected(self):
+        client = self._client()
+        response = self._post(
+            client,
+            self._token(client),
+            HTTP_REFERER='https://evil.example/page',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_null_origin_without_a_token_is_still_rejected(self):
+        client = self._client()
+        response = client.post(
+            reverse('accounts:login'),
+            {'username': 'nobody@example.com', 'password': 'wrong-password'},
+            HTTP_ORIGIN='null',
+            **self.HTTPS,
+        )
+        self.assertEqual(response.status_code, 403)

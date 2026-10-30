@@ -447,6 +447,10 @@ cookies the app sent, the `Origin`/`Referer` headers, and offers a test form.
   home-screen icon, open the site in **Chrome** or **Safari**, log in there, then
   add it to the home screen again.
 
+`config/middleware.py` repairs the `Origin`/`Referer` headers that some
+webviews mangle (`Origin: null`, or no origin at all). Requests from other
+sites are still rejected, and the CSRF token check is unchanged.
+
 The failure page shows the technical reason under **Technical details**.
 
 ## Production notes
