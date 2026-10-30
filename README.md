@@ -150,6 +150,8 @@ All demo accounts use the password `demo12345`.
 | Student — Alex Cruz | `student@university.test` |
 | Student — Maria Santos | `student2@university.test` |
 
+If a coordinator already exists (for example the `bootstrap` administrator), `seed_demo` reuses that account instead of creating a second coordinator.
+
 The Django admin is **hidden**. It is not linked anywhere and anonymous requests to `/admin/` return a 404. To use it, sign in through the normal portal at <http://127.0.0.1:8000/accounts/login/> with a staff account, then open <http://127.0.0.1:8000/admin/>. Create a superuser with:
 
 ```bash

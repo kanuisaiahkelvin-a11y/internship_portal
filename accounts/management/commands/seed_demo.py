@@ -22,21 +22,30 @@ class Command(BaseCommand):
     help = 'Create demo companies, students, postings, and applications.'
 
     def handle(self, *args, **options):
-        if User.objects.filter(email='coordinator@internlink.test').exists():
+        if User.objects.filter(email='employer@northwind.test').exists():
             self.stdout.write(self.style.WARNING(
                 'Demo data already exists. Delete db.sqlite3 to reseed from scratch.'
             ))
             return
 
         today = timezone.localdate()
-        coordinator = User.objects.create_user(
-            email='coordinator@internlink.test',
-            password=DEMO_PASSWORD,
-            first_name='Grace',
-            last_name='Reyes',
-            role=User.Role.COORDINATOR,
-            phone='0917 000 0001',
+        # The system has a single coordinator: the administrator account created
+        # by `bootstrap` or `createsuperuser`. Reuse it rather than adding a
+        # second coordinator.
+        coordinator = (
+            User.objects.filter(role=User.Role.COORDINATOR)
+            .order_by('-is_superuser', 'pk')
+            .first()
         )
+        if coordinator is None:
+            coordinator = User.objects.create_user(
+                email='coordinator@internlink.test',
+                password=DEMO_PASSWORD,
+                first_name='Grace',
+                last_name='Reyes',
+                role=User.Role.COORDINATOR,
+                phone='0917 000 0001',
+            )
 
         northwind_rep = User.objects.create_user(
             email='employer@northwind.test',
@@ -403,7 +412,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Demo data created.'))
         self.stdout.write('')
         self.stdout.write('Demo accounts (password: demo12345)')
-        self.stdout.write('  Coordinator : coordinator@internlink.test')
+        self.stdout.write(f'  Coordinator : {coordinator.email}')
         self.stdout.write('  Employer    : employer@northwind.test')
         self.stdout.write('  Employer    : employer@brightwave.test')
         self.stdout.write('  Student     : student@university.test')
